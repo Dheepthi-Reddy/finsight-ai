@@ -23,4 +23,5 @@ FinSight AI is a production-grade machine learning platform for financial indust
 - [x] Environment setup
 - [x] Folder structure created
 - [x] requirements.txt created
+- [x] Docker Compose configured
 - [] Dependencies installed
