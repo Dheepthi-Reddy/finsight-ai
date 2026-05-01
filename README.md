@@ -5,7 +5,7 @@
 FinSight AI is a production-grade machine learning platform for financial industry. This project is aimed at doing "Fraud Detection" and "Compliance Assistance" simultaneously.
 
 - Watches live stream of financial transactions and scores each one in real time: "How likely is this transaction to be fraudulent", and it explains "why"
-- Get answers for the questions posed in plain Engilsh pulled directly from SEC documents.
+- Get answers for the questions posed in plain English pulled directly from SEC documents.
 
 ## Tech Stack
 
@@ -16,3 +16,10 @@ FinSight AI is a production-grade machine learning platform for financial indust
 |       Docker      |To run infrastructure locally, for its ease of compatability across all the alternatives on different machines|
 |       VS Code     |Coding tool used for this project, as its light weight and has built-in extensions|
 |       pip         |Installs and manages all Python libraries the project depends on|
+
+
+## Status
+
+- [x] Environment setup
+- [x] requirements.txt created
+- [] Dependencies installed
