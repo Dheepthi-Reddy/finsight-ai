@@ -1,0 +1,21 @@
+# -- Core ML --
+faker # for creating fake data
+kafka-python # for producing and consuming data streams
+pyspark==3.5.1 # to process data with Spark
+xgboost==2.0.3 # ML model for fraud detection
+optuna==3.5.0 # for Hyperparameter tuning
+shap # to explain model predictions
+fastapi==0.110.0 # to build and serve API endpoints
+faiss-cpu # to store and search document embeddings
+langchain # framework that orchestrates as a a chain between retrieval and LLM
+boto3 # Amazon SDK to connect Claude via AWS
+
+# -- Infrastructure --
+uvicorn # server to run FastAPI
+pandas # data manipulation and r/w files
+numpy # for numerical calculations
+scikit-learn # for splitting data and for evaluation metrics
+mlflow==2.10.0 # experiment tracking
+python-dotenv # to read .env file into the app
+pydantic-settings # for managing app configurations and settings
+sentence-transformers # to convert text to vectors/embeddings
