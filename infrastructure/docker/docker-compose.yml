@@ -1,0 +1,68 @@
+# first line of every docker 
+version: "3.9"
+
+# all the services to run
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+  
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on: [zookeeper] # tells docker to start zookeeper first before starting kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: finsight
+      POSTGRES_USER: finsight
+      POSTGRES_PASSWORD: finsight
+    volumes:
+      - pgdata:/var/lib/postgresql/data # without this the data will be lost when we restart the container
+  
+  mlflow:
+    image: python:3.11-slim
+    depends_on: [postgres]
+    ports:
+      - "5000:5000"
+    command: >
+      bash -c "pip install mlflow psycopg2-binary -q &&
+               mlflow server
+               --backend-store-uri postgresql://finsight:finsight@postgres:5432/finsight
+               --default-artifact-root /mlflow/artifacts
+               --host 0.0.0.0 --port 5000"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    depends_on: [postgres, mlflow]
+    environment:
+      ENV: development
+      MLFLOW_URI: http://mlflow:5000
+      EMBED_MODE: faiss
+    volumes:
+      - ./data:/app/data
+      - ./fraud_model/artifacts:/app/fraud_model/artifacts
+
+volumes:
+    pgdata:
+    mlflow_artifacts:
+
+  
