@@ -18,10 +18,34 @@ FinSight AI is a production-grade machine learning platform for financial indust
 |       pip         |Installs and manages all Python libraries the project depends on|
 
 
+finsight-ai/
+├── data_pipeline/
+│   ├── generators/    → 
+│   ├── kafka/         → 
+│   └── spark/         → 
+├── fraud_model/
+│   ├── training/      → 
+│   ├── evaluation/    → 
+│   ├── serving/       → 
+│   └── artifacts/     → 
+├── rag_pipeline/
+│   ├── ingestion/     → 
+│   └── generation/    → 
+├── api/
+│   └── routers/       → 
+├── infrastructure/
+│   └── docker/        → 
+├── tests/
+│   └── unit/          → 
+└── notebooks/         →
+
+
+
+
 ## Status
 
 - [x] Environment setup
 - [x] Folder structure created
 - [x] requirements.txt created
 - [x] Docker Compose configured
-- [] Dependencies installed
+- [x] Dockerfile created
