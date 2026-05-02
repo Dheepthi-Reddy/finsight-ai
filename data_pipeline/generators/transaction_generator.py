@@ -1,7 +1,6 @@
 """
 Generates 500,000 synthetic labeled transactions for XGBoost fraud model training.
 ~2% fraud rate distributed equally across four fraud patterns.
-Run from the project root: python data_pipeline/generators/transaction_generator.py
 Output: data/transactions.csv
 """
 

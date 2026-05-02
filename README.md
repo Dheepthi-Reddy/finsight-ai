@@ -50,3 +50,5 @@ finsight-ai/
 - [x] requirements.txt created
 - [x] Docker Compose configured
 - [x] Dockerfile created
+- [x] Transaction data generator created
+- [x] 500k synthetic transactions generated
