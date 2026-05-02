@@ -20,7 +20,7 @@ FinSight AI is a production-grade machine learning platform for financial indust
 
 
 ## Project Structure
-
+```
 finsight-ai/
 ├── data_pipeline/
 │   └── generators/   
@@ -43,10 +43,10 @@ finsight-ai/
 │   │       ├── chunker.py → splits filings into 512-char overlapping chunks
 │   │       └── embedder.py  → converts text chunks to vectors, stores in FAISS index
 │   └── generation/
-│       ├── bedrock_client.py  → connects to Claude via AWS Bedrock, stub mode for local dev
-│        ├── prompt_templates.py  → system and user prompts for compliance assistant and fraud explainer
-│       └── response_evaluator.py  → evaluates Claude responses with BLEU, ROUGE-L and faithfulness scores
-│
+│   │       ├── bedrock_client.py  → connects to Claude via AWS Bedrock, stub mode for local dev
+│   │       ├── prompt_templates.py  → system and user prompts for compliance assistant and fraud explainer
+│   │       └── response_evaluator.py  → evaluates Claude responses with BLEU, ROUGE-L and faithfulness scores
+│   └── chain.py → main RAG pipeline, wires retrieval and Claude generation
 ├── api/
 │   └── routers/       → 
 ├── infrastructure/
@@ -55,7 +55,7 @@ finsight-ai/
 │   └── unit/          → 
 └── notebooks/         →
 
-
+```
 
 
 ## Status
@@ -78,5 +78,5 @@ finsight-ai/
 - [x] AWS Bedrock client created
 - [x] Prompt templates created
 - [x] Response evaluator created
-
+- [x] RAG chain created
 
