@@ -18,6 +18,9 @@ FinSight AI is a production-grade machine learning platform for financial indust
 |       pip         |Installs and manages all Python libraries the project depends on|
 
 
+
+## Project Structure
+
 finsight-ai/
 ├── data_pipeline/
 │   └── generators/   
@@ -36,7 +39,8 @@ finsight-ai/
 │   └── artifacts/     → 
 ├── rag_pipeline/
 │   ├── ingestion/ 
-│   │       └── sec_loader.py    → downloads SEC filings(10-K, 10-Q, 8-K) for 10 companies
+│   │       ├── sec_loader.py    → downloads SEC filings(10-K, 10-Q, 8-K) for 10 companies
+│   │       └── chunker.py → splits filings into 512-char overlapping chunks
 │   └── generation/    → 
 ├── api/
 │   └── routers/       → 
