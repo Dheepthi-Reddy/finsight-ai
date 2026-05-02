@@ -1,0 +1,314 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# What is CI/CD?
+#
+# CI (Continuous Integration) is the practice of automatically running quality
+# checks every time a developer pushes code or opens a pull request. The goal
+# is to catch bugs, style violations, and broken builds *before* they reach
+# the main branch — not after a human reviewer spots them in production.
+#
+# CD (Continuous Delivery/Deployment) extends CI by automatically packaging and
+# deploying code that passes all checks. This pipeline implements the CI half:
+# it validates every push but leaves deployment to a separate release workflow.
+#
+# Why automate this instead of running checks locally?
+# - Developers forget, or skip checks under deadline pressure.
+# - "Works on my machine" bugs slip through when environments differ.
+# - PR reviewers shouldn't need to run a test suite manually.
+# - A green CI badge is a public, auditable signal that the code meets a
+#   minimum quality bar — important for a regulated domain like financial ML.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: FinSight AI — CI
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+# Run on every push to main (to catch direct commits and merge commits) and on
+# every pull_request targeting main (to validate the PR before it is merged).
+#
+# push + pull_request together mean:
+#   • PR opened / updated → CI runs on the PR's head commit
+#   • PR merged           → CI runs again on the resulting merge commit on main
+#
+# This double-run catches the rare case where two independently-green PRs
+# conflict with each other after merging.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel any in-progress runs for the same branch/PR when a new commit is
+# pushed. Prevents stale jobs from hogging runners and giving false signals.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 1 — LINT
+  #
+  # Why lint in CI?
+  # Linting enforces consistent code style across the team and catches common
+  # bugs (undefined variables, unused imports, shadowed names) that type-checkers
+  # and tests might miss. A style violation flagged by automation is less
+  # confrontational than one raised in a human code review — it's just the rules.
+  #
+  # flake8 is a fast static analyser; it does NOT run the code so it can complete
+  # in under 10 seconds. Running it as a separate job (not combined with tests)
+  # gives a targeted "lint failed" signal that is easier to triage than a mixed
+  # "lint and test failed" message.
+  # ────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint (flake8)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository at the commit that triggered the workflow.
+      # fetch-depth: 1 (the default) is sufficient here — lint only needs the
+      # current file tree, not the full git history.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up the exact Python version used in production so linting reflects
+      # the actual runtime. Python 3.11 is specified because newer syntax (e.g.
+      # PEP 695 type aliases introduced in 3.12) would silently pass lint on 3.12
+      # but fail at runtime on the 3.11 production image.
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          # Cache the pip download cache between runs. After the first run,
+          # `pip install flake8` resolves from the local cache instead of PyPI
+          # — saves ~5s per run on a busy repository.
+          cache: "pip"
+
+      # Install only flake8 here — not the full requirements.txt — so the lint
+      # job is as fast as possible. Linting doesn't execute code, so the runtime
+      # dependencies (torch, xgboost, faiss, etc.) are irrelevant.
+      - name: Install flake8
+        run: pip install flake8
+
+      # Run flake8 across the entire project.
+      #
+      # --max-line-length 100
+      #   The default PEP 8 limit of 79 is too restrictive for modern code with
+      #   descriptive names. 100 matches the project's code style. Long docstrings
+      #   and prompt template strings are excluded per-file via # noqa: E501 where
+      #   breaking them would hurt readability.
+      #
+      # --exclude
+      #   venv/           — the virtual environment is not project code
+      #   __pycache__/    — compiled bytecode, not source
+      #   .git/           — version-control internals
+      #   infrastructure/ — Dockerfiles and shell scripts, not Python
+      #
+      # --extend-ignore E203
+      #   Whitespace before ':' (e.g. in slice notation `x[1 : 3]`) is valid
+      #   Python and preferred by Black — flake8's default rule is overly strict.
+      #
+      # --extend-ignore W503
+      #   Line break before binary operator. PEP 8 itself reversed this opinion
+      #   in 2016; W503 is kept in flake8 for legacy reasons but should not fail
+      #   modern code that follows the now-recommended W504 style.
+      - name: Run flake8
+        run: |
+          flake8 . \
+            --max-line-length 100 \
+            --exclude venv,__pycache__,.git,infrastructure \
+            --extend-ignore E203,W503 \
+            --statistics \
+            --count
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 2 — TEST
+  #
+  # Why measure test coverage?
+  # Coverage is a proxy for confidence: high coverage means most code paths have
+  # been exercised automatically, so a future change that breaks one of them will
+  # produce a red CI build rather than a silent production incident.
+  #
+  # 70% is deliberately conservative for this project because:
+  #   a) Several modules depend on ML artifacts (model weights, FAISS indices)
+  #      that are not committed to the repository; those code paths are
+  #      integration-tested separately.
+  #   b) Prompt templates are text constants — testing them for character-level
+  #      correctness has little value.
+  #   c) The goal is a safety net, not 100% coverage theatre. A hard floor of
+  #      70% will catch large regressions without incentivising meaningless tests.
+  # ────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Test (pytest + coverage)
+    runs-on: ubuntu-latest
+
+    # Environment variables available to every step in this job.
+    # These prevent the application code from attempting live AWS/database
+    # connections during tests — stubs are activated instead.
+    env:
+      BEDROCK_STUB: "true"          # BedrockClient returns canned responses
+      ENV: "development"            # Enables debug mode in api/config.py
+      AWS_REGION: "us-east-1"      # Satisfies boto3 region validation without a real call
+      SECRET_KEY: "ci-test-secret-key-not-for-production"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # Install the full application dependencies so every module can be imported
+      # correctly. Missing dependencies cause ImportError during test collection,
+      # which pytest reports as an error (not a skip), making the suite appear
+      # broken even if the test logic itself is fine.
+      #
+      # pytest-cov is installed separately because it is a test-only dependency
+      # that doesn't belong in the application's requirements.txt — shipping
+      # coverage tooling inside a production Docker image wastes ~5 MB.
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      # Run the test suite with coverage measurement.
+      #
+      # --cov flags specify which source trees to measure. Listing them explicitly
+      # (instead of --cov=.) prevents the venv, tests themselves, and generated
+      # artefacts from inflating the coverage percentage with easy-to-cover
+      # boilerplate.
+      #
+      # --cov-report=xml      — machine-readable report consumed by coverage
+      #                         upload services (Codecov, SonarCloud).
+      # --cov-report=term-missing — human-readable summary in the CI log showing
+      #                         exactly which lines are uncovered — developers
+      #                         can see where to add tests without running locally.
+      # --cov-fail-under=70   — exit code 1 (failure) if total coverage < 70%.
+      #                         This is the enforcement mechanism: the job fails
+      #                         and blocks merging if coverage regresses.
+      # -v                    — verbose output shows each test name and its
+      #                         PASSED/FAILED/SKIPPED status in the CI log.
+      # --tb=short            — concise tracebacks: enough context to diagnose
+      #                         failures without overwhelming the log with 50-line
+      #                         stack traces for simple assertion errors.
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=api \
+            --cov=fraud_model \
+            --cov=rag_pipeline \
+            --cov=data_pipeline \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70 \
+            -v \
+            --tb=short
+
+      # Upload the coverage XML as a build artefact so it can be downloaded and
+      # inspected after a run, or forwarded to a coverage dashboard.
+      # `if: always()` ensures the report is uploaded even when the coverage
+      # threshold fails — without it the artefact would only appear on green runs,
+      # making it impossible to see *how far below* the threshold a failing run is.
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14   # keep for two weeks; auto-deleted after that
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # JOB 3 — DOCKER BUILD
+  #
+  # Why validate the Docker build in CI?
+  # The Docker image is the unit of deployment: it is exactly what runs in
+  # production. A Python test suite that passes on the developer's machine gives
+  # no guarantee that the Dockerfile is correct — a missing COPY, a wrong base
+  # image, or a pip install flag that behaves differently inside Docker can all
+  # cause the container to fail at startup even when every test is green.
+  #
+  # Building the image in CI catches these failures on every change to:
+  #   - requirements.txt (a new dependency that conflicts inside the image)
+  #   - Dockerfile.api    (any change to the build recipe itself)
+  #   - Any Python file   (a syntax error visible only after pip install)
+  #
+  # This job runs only after BOTH lint and test pass (needs: [lint, test]).
+  # There is no value in verifying the Docker build if the code inside it is
+  # already known to be broken.
+  # ────────────────────────────────────────────────────────────────────────────
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # docker/setup-buildx-action activates Docker BuildKit, the modern build
+      # engine. BuildKit provides:
+      #   - Layer caching exported to GitHub Actions cache (speeds up rebuilds)
+      #   - Parallel RUN step execution where possible
+      #   - Better error messages when a build step fails
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build the API image.
+      #
+      # -f infrastructure/docker/Dockerfile.api
+      #   Dockerfile lives under infrastructure/docker/ to separate build config
+      #   from application code. The build context (`.`) is still the project
+      #   root so `COPY . .` in the Dockerfile captures all source files.
+      #
+      # -t finsight-api:ci
+      #   Tag the image for identification in subsequent steps (e.g. running a
+      #   smoke test container). The `ci` tag signals it's a CI-only image that
+      #   should never be pushed to a registry.
+      #
+      # --cache-from / --cache-to
+      #   Persist the BuildKit layer cache in the GitHub Actions cache store.
+      #   On subsequent runs, unchanged layers (e.g. `pip install -r requirements.txt`
+      #   when requirements.txt hasn't changed) are restored from cache instead of
+      #   re-executed — typically saves 2–4 minutes per build.
+      #
+      # --load
+      #   Export the built image to the local Docker daemon so it can be used in
+      #   subsequent steps (e.g. `docker run` for a smoke test). Without --load,
+      #   BuildKit keeps the image in its internal cache but doesn't make it
+      #   available to other Docker commands in the same job.
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.api
+          tags: finsight-api:ci
+          push: false           # never push to a registry from this job
+          load: true            # make image available for the smoke test below
+          cache-from: type=gha  # restore cache from GitHub Actions cache store
+          cache-to: type=gha,mode=max  # write all layers back to cache after build
+
+      # Smoke test: start the container and confirm it exits cleanly with a
+      # known command. A successful `python -c "import api.config"` means:
+      #   - The base image is valid
+      #   - All pip dependencies installed without conflict
+      #   - The Python path inside the container is correct
+      #   - There are no top-level import errors in the application code
+      #
+      # This is not a full integration test — it does not start the server or
+      # call any endpoints. That belongs in a separate integration-test workflow.
+      - name: Smoke test — verify imports inside container
+        run: |
+          docker run --rm \
+            -e BEDROCK_STUB=true \
+            -e ENV=development \
+            -e AWS_REGION=us-east-1 \
+            -e SECRET_KEY=ci-smoke-test \
+            finsight-api:ci \
+            python -c "
+          import api.config
+          import api.routers.health
+          import api.routers.fraud
+          print('All core imports successful')
+          "
