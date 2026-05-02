@@ -15,7 +15,8 @@ uvicorn # server to run FastAPI
 pandas # data manipulation and r/w files
 numpy # for numerical calculations
 scikit-learn # for splitting data and for evaluation metrics
-mlflow==2.10.0 # experiment tracking
+mlflow==2.19.0 # experiment tracking
+pyarrow>=16.0.0  # required for Python 3.13 compatibility
 python-dotenv # to read .env file into the app
 pydantic-settings # for managing app configurations and settings
 sentence-transformers # to convert text to vectors/embeddings
