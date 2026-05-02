@@ -29,7 +29,8 @@ finsight-ai/
 ├── fraud_model/
 │   ├── training/ 
 │   │      └── train.py → XGBoost classifier with Optuna tuning and MLflow trackig
-│   ├── evaluation/    → 
+│   ├── evaluation/    
+│   │      └── shap_analysis.py  → SHAP explainability, per-transaction feature importance
 │   ├── serving/       → 
 │   └── artifacts/     → 
 ├── rag_pipeline/
@@ -58,3 +59,4 @@ finsight-ai/
 - [x] Kafka producer created
 - [x] Spark feature engineering job created
 - [x] XGBoost fraud model training script screated
+- [x] SHAP explainability module created
