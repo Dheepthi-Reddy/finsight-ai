@@ -40,7 +40,8 @@ finsight-ai/
 ├── rag_pipeline/
 │   ├── ingestion/ 
 │   │       ├── sec_loader.py    → downloads SEC filings(10-K, 10-Q, 8-K) for 10 companies
-│   │       └── chunker.py → splits filings into 512-char overlapping chunks
+│   │       ├── chunker.py → splits filings into 512-char overlapping chunks
+│   │       └── embedder.py  → converts text chunks to vectors, stores in FAISS index
 │   └── generation/    → 
 ├── api/
 │   └── routers/       → 
@@ -68,3 +69,6 @@ finsight-ai/
 - [x] SHAP explainability module created
 - [x] Fraud model serving layer created
 - [x] SEC filing loader created
+- [x] Document chunker created
+- [x] FAISS embedder created
+
