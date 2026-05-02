@@ -51,7 +51,8 @@ finsight-ai/
 │   ├── routers/ 
 │   │       ├── health.py   → to check if the service is running fine
 │   │       ├── fraud.py    → endpoint to get fraud scoring
-│   │       └── query.py    → endpoint for the RAG compliance assistant.
+│   │       ├── query.py    → endpoint for the RAG compliance assistant.
+│   │       └── explain.py  → endpoint for SHAP explanations.
 │   ├── config.py     → centralized app configuration from .env
 │   └── main.py        → FastAPI app entry point, registers all routers
 ├── infrastructure/
@@ -89,3 +90,4 @@ finsight-ai/
 - [x] Health end point created
 - [x] Fraud endpoint created
 - [x] Query endpoint created
+- [x] Explain endpoint created
