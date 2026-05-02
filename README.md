@@ -22,7 +22,8 @@ finsight-ai/
 ├── data_pipeline/
 │   ├── generators/   
 |   |      └── transaction_generator.py  → generates 500k fake transactions for training
-│   ├── kafka/         → 
+│   ├── kafka/
+|   |      └── producer.py  → Streams transactions to kafka at 100 events/sec
 │   └── spark/         → 
 ├── fraud_model/
 │   ├── training/      → 
@@ -52,3 +53,4 @@ finsight-ai/
 - [x] Dockerfile created
 - [x] Transaction data generator created
 - [x] 500k synthetic transactions generated
+- [x] Kafka producer created
