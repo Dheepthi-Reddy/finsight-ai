@@ -49,7 +49,8 @@ finsight-ai/
 │   └── chain.py → main RAG pipeline, wires retrieval and Claude generation
 ├── api/
 │   ├── routers/ 
-│   │       └── health.py   → to check if the service is running fine
+│   │       ├── health.py   → to check if the service is running fine
+│   │       └── fraud.py    → endpoint to get fraud scoring
 │   ├── config.py     → centralized app configuration from .env
 │   └──main.py        → FastAPI app entry point, registers all routers
 ├── infrastructure/
@@ -85,3 +86,4 @@ finsight-ai/
 - [x] API config created
 - [x] FastAPI main app created
 - [x] Health end point created
+- [x] Fraud endpoint created
