@@ -20,11 +20,12 @@ FinSight AI is a production-grade machine learning platform for financial indust
 
 finsight-ai/
 ├── data_pipeline/
-│   ├── generators/   
-|   |      └── transaction_generator.py  → generates 500k fake transactions for training
+│   └── generators/   
+|   |     └── transaction_generator.py  → generates 500k fake transactions for training
 │   ├── kafka/
 |   |      └── producer.py  → Streams transactions to kafka at 100 events/sec
-│   └── spark/         → 
+│   └── spark/
+|         └── feature_engineering.py   → Computes Fraud detection(PySpark) 
 ├── fraud_model/
 │   ├── training/      → 
 │   ├── evaluation/    → 
