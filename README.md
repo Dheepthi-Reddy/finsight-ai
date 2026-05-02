@@ -31,7 +31,8 @@ finsight-ai/
 │   │      └── train.py → XGBoost classifier with Optuna tuning and MLflow trackig
 │   ├── evaluation/    
 │   │      └── shap_analysis.py  → SHAP explainability, per-transaction feature importance
-│   ├── serving/       → 
+│   ├── serving/
+│   │      └── predictor.py →  loads model, scores the transactions and stores the results in memory
 │   └── artifacts/     → 
 ├── rag_pipeline/
 │   ├── ingestion/     → 
@@ -60,3 +61,4 @@ finsight-ai/
 - [x] Spark feature engineering job created
 - [x] XGBoost fraud model training script screated
 - [x] SHAP explainability module created
+- [x] Fraud model serving layer created
