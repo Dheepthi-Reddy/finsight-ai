@@ -42,7 +42,9 @@ finsight-ai/
 │   │       ├── sec_loader.py    → downloads SEC filings(10-K, 10-Q, 8-K) for 10 companies
 │   │       ├── chunker.py → splits filings into 512-char overlapping chunks
 │   │       └── embedder.py  → converts text chunks to vectors, stores in FAISS index
-│   └── generation/    → 
+│   └── generation/
+│       ├── bedrock_client.py  → connects to Claude via AWS Bedrock, stub mode for local dev
+        ├── prompt_templates.py  → system and user prompts for compliance assistant and fraud explainer
 ├── api/
 │   └── routers/       → 
 ├── infrastructure/
@@ -71,4 +73,6 @@ finsight-ai/
 - [x] SEC filing loader created
 - [x] Document chunker created
 - [x] FAISS embedder created
+- [x] AWS Bedrock client created
+- [x] Prompt templates created
 
