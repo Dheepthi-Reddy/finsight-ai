@@ -35,7 +35,8 @@ finsight-ai/
 │   │      └── predictor.py →  loads model, scores the transactions and stores the results in memory
 │   └── artifacts/     → 
 ├── rag_pipeline/
-│   ├── ingestion/     → 
+│   ├── ingestion/ 
+│   │       └── sec_loader.py    → downloads SEC filings(10-K, 10-Q, 8-K) for 10 companies
 │   └── generation/    → 
 ├── api/
 │   └── routers/       → 
@@ -62,3 +63,4 @@ finsight-ai/
 - [x] XGBoost fraud model training script screated
 - [x] SHAP explainability module created
 - [x] Fraud model serving layer created
+- [x] SEC filing loader created
