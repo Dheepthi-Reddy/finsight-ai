@@ -49,7 +49,8 @@ finsight-ai/
 │   └── chain.py → main RAG pipeline, wires retrieval and Claude generation
 ├── api/
 │   ├── routers/ 
-│   └── config.py     → centralized app configuration from .env
+│   ├── config.py     → centralized app configuration from .env
+│   └──main.py        → FastAPI app entry point, registers all routers
 ├── infrastructure/
 │   └── docker/        → 
 ├── tests/
@@ -81,3 +82,4 @@ finsight-ai/
 - [x] Response evaluator created
 - [x] RAG chain created
 - [x] API config created
+- [x] FastAPI main app created
