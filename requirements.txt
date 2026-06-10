@@ -24,4 +24,5 @@ pytest-cov    # test coverage reporting
 
 xgboost==2.0.3
 sentence-transformers
-shap # to explain model predictions
+shap          # to explain model predictions
+openai        # GPT-4 client — drop-in alternative to BedrockClient
