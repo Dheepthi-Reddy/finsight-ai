@@ -368,10 +368,8 @@ if __name__ == "__main__":
     print(f"\n[batch]  {len(results)} transactions scored")
     for r in results:
         print(
-            f"  {
-                r.transaction_id}  p={
-                r.fraud_probability:.4f}  {
-                r.risk_level:<8}  fraud={
-                    r.is_fraud}")
+            f"  {r.transaction_id}  p={r.fraud_probability:.4f}"
+            f"  {r.risk_level:<8}  fraud={r.is_fraud}"
+        )
 
     print(f"\n[store]  size={predictor.store_size()}  summary={predictor.risk_summary()}")

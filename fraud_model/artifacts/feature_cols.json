@@ -1,0 +1,35 @@
+{
+  "feature_cols": [
+    "amount",
+    "amount_log",
+    "amount_x_risk",
+    "amount_sum_1h",
+    "txn_count_1h",
+    "hour_of_day",
+    "day_of_week",
+    "is_night",
+    "is_weekend",
+    "account_age_bucket",
+    "merchant_category"
+  ],
+  "target_col": "is_fraud",
+  "merchant_category_mapping": {
+    "check_cashing": 0,
+    "crypto_exchange": 1,
+    "entertainment": 2,
+    "gas_station": 3,
+    "grocery": 4,
+    "healthcare": 5,
+    "money_order": 6,
+    "pawn_shop": 7,
+    "pharmacy": 8,
+    "restaurant": 9,
+    "retail": 10,
+    "subscription": 11,
+    "travel": 12,
+    "utilities": 13,
+    "wire_transfer": 14
+  },
+  "best_threshold": 0.9661946296691895,
+  "scale_pos_weight": 48.74351002642624
+}
