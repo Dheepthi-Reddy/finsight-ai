@@ -28,7 +28,6 @@ every `pytest` run. Instead, we:
 from __future__ import annotations
 
 import math
-import sys
 from pathlib import Path
 
 import pytest
@@ -41,7 +40,7 @@ pytestmark = pytest.mark.filterwarnings("ignore::ImportWarning")
 # Check optional library availability at module level without skipping the file.
 # Tests that need these libraries apply per-class skipping in their _import fixture.
 try:
-    import nltk as _nltk
+    import nltk  # noqa: F401
     _NLTK_AVAILABLE = True
 except ImportError:
     _NLTK_AVAILABLE = False
@@ -68,7 +67,7 @@ class TestFeatureEngineering:
     def _import(self):
         """Import the fraud router once per class, not once per test."""
         from api.routers.fraud import MERCHANT_RISK, TransactionRequest, _engineer_features
-        self.MERCHANT_RISK     = MERCHANT_RISK
+        self.MERCHANT_RISK = MERCHANT_RISK
         self.TransactionRequest = TransactionRequest
         self._engineer_features = _engineer_features
 
@@ -181,13 +180,13 @@ class TestFeatureEngineering:
         Tests a cross-section of categories at a fixed $1,000 amount.
         """
         test_cases = [
-            ("grocery",        0.05),
-            ("restaurant",     0.05),
-            ("gas_station",    0.10),
-            ("travel",         0.20),
-            ("pawn_shop",      0.90),
-            ("crypto_exchange",0.90),
-            ("wire_transfer",  0.95),
+            ("grocery", 0.05),
+            ("restaurant", 0.05),
+            ("gas_station", 0.10),
+            ("travel", 0.20),
+            ("pawn_shop", 0.90),
+            ("crypto_exchange", 0.90),
+            ("wire_transfer", 0.95),
         ]
         for category, expected_weight in test_cases:
             req = self._req(amount=1_000.0, merchant_category=category)
@@ -397,7 +396,7 @@ class TestFaithfulness:
         Filtering them as 'faithful' keeps the metric focused on content sentences.
         """
         context = "JPMorgan filed SARs for suspicious wire transfers in 2023."
-        answer  = "OK. JPMorgan filed SARs for suspicious wire transfers."
+        answer = "OK. JPMorgan filed SARs for suspicious wire transfers."
         score = self.compute_faithfulness(answer, context)
         # The substantive sentence is grounded; 'OK.' should not drag score down
         assert score >= 0.5, f"Stopword-only sentence incorrectly penalised: {score:.3f}"
@@ -439,7 +438,7 @@ class TestBLEU:
     def test_unrelated_text_scores_low(self):
         """Completely unrelated answer should score close to 0."""
         context = "Basel III capital requirements mandate a minimum CET1 ratio of 4.5 percent."
-        answer  = "The quick brown fox jumps over the lazy dog every single morning."
+        answer = "The quick brown fox jumps over the lazy dog every single morning."
         score = self.compute_bleu(answer, context)
         assert score is not None
         assert score < 0.15, f"Expected near-zero BLEU for unrelated text, got {score:.3f}"
@@ -453,7 +452,7 @@ class TestBLEU:
     def test_partial_match_between_extremes(self):
         """Partial n-gram overlap should produce a score strictly between 0 and 1."""
         context = "JPMorgan maintained a CET1 capital ratio of 13.1 percent in Q4 2023."
-        answer  = "JPMorgan reported strong capital ratios in their annual disclosure."
+        answer = "JPMorgan reported strong capital ratios in their annual disclosure."
         score = self.compute_bleu(answer, context)
         assert score is not None
         assert 0.0 <= score <= 1.0
@@ -497,9 +496,9 @@ class TestEvaluateResponse:
         A missing overall field would break API response serialisation.
         """
         result = self.evaluate_response(
-            answer   = "JPMorgan files SARs under the Bank Secrecy Act.",
-            context  = "JPMorgan files Suspicious Activity Reports under the BSA.",
-            question = "What does JPMorgan do under the BSA?",
+            answer="JPMorgan files SARs under the Bank Secrecy Act.",
+            context="JPMorgan files Suspicious Activity Reports under the BSA.",
+            question="What does JPMorgan do under the BSA?",
         )
         assert result.overall in {"PASS", "WARN", "FAIL", "UNKNOWN"}
 
@@ -509,15 +508,15 @@ class TestEvaluateResponse:
         EvaluationScores in api/routers/query.py must be present.
         """
         result = self.evaluate_response(
-            answer  = "The bank holds capital reserves.",
-            context = "JPMorgan holds capital reserves exceeding regulatory minimums.",
-            question= "How does JPMorgan manage capital?",
+            answer="The bank holds capital reserves.",
+            context="JPMorgan holds capital reserves exceeding regulatory minimums.",
+            question="How does JPMorgan manage capital?",
         )
         d = result.to_dict()
-        assert "bleu"              in d
-        assert "rouge_l"           in d
-        assert "faithfulness"      in d
-        assert "overall"           in d
+        assert "bleu" in d
+        assert "rouge_l" in d
+        assert "faithfulness" in d
+        assert "overall" in d
         assert "available_metrics" in d
 
     def test_high_overlap_answer_does_not_fail(self):
@@ -575,7 +574,7 @@ class TestChunker:
         long_text = (
             "JPMorgan Chase maintains comprehensive AML compliance programs. " * 20
         )
-        docs   = [{"text": long_text, "ticker": "JPM", "filing_type": "10-K", "path": "test.txt"}]
+        docs = [{"text": long_text, "ticker": "JPM", "filing_type": "10-K", "path": "test.txt"}]
         chunks = chunk_fn(docs)
         assert len(chunks) >= 2, "Long document should produce multiple chunks"
 
@@ -587,7 +586,7 @@ class TestChunker:
         accommodate that edge case without false failures.
         """
         long_text = "This is a sentence about financial regulation and AML compliance. " * 30
-        docs   = [{"text": long_text, "ticker": "JPM", "filing_type": "10-K", "path": "test.txt"}]
+        docs = [{"text": long_text, "ticker": "JPM", "filing_type": "10-K", "path": "test.txt"}]
         chunks = chunk_fn(docs)
         for c in chunks:
             assert len(c["text"]) <= 512 * 1.2, (
@@ -601,12 +600,13 @@ class TestChunker:
         required by COMPLIANCE_SYSTEM_PROMPT cannot be constructed.
         """
         long_text = "Regulatory paragraph about capital requirements. " * 30
-        docs   = [{"text": long_text, "ticker": "BAC", "filing_type": "10-Q", "path": "/data/bac.txt"}]
+        docs = [{"text": long_text, "ticker": "BAC",
+                 "filing_type": "10-Q", "path": "/data/bac.txt"}]
         chunks = chunk_fn(docs)
         for c in chunks:
-            assert c["metadata"]["ticker"]      == "BAC"
+            assert c["metadata"]["ticker"] == "BAC"
             assert c["metadata"]["filing_type"] == "10-Q"
-            assert c["metadata"]["source"]      == "/data/bac.txt"
+            assert c["metadata"]["source"] == "/data/bac.txt"
 
     def test_chunk_indices_are_gapless(self, chunk_fn):
         """
@@ -616,7 +616,7 @@ class TestChunker:
         chunk 1 to appear missing in citations.
         """
         long_text = "Compliance requirement and regulatory obligation paragraph. " * 40
-        docs   = [{"text": long_text, "ticker": "GS", "filing_type": "8-K", "path": "gs.txt"}]
+        docs = [{"text": long_text, "ticker": "GS", "filing_type": "8-K", "path": "gs.txt"}]
         chunks = chunk_fn(docs)
         indices = [c["metadata"]["chunk_index"] for c in chunks]
         assert indices == list(range(len(indices))), (
@@ -630,7 +630,7 @@ class TestChunker:
         an incorrect count produces misleading citations.
         """
         long_text = "Risk factor disclosure and forward-looking statement about AML. " * 25
-        docs   = [{"text": long_text, "ticker": "WFC", "filing_type": "10-K", "path": "wfc.txt"}]
+        docs = [{"text": long_text, "ticker": "WFC", "filing_type": "10-K", "path": "wfc.txt"}]
         chunks = chunk_fn(docs)
         reported_count = chunks[0]["metadata"]["chunk_count"]
         assert reported_count == len(chunks), (
@@ -652,7 +652,7 @@ class TestChunker:
             "JPMorgan Chase maintains a comprehensive AML compliance program under the "
             "Bank Secrecy Act including transaction monitoring and SAR filing obligations."
         )
-        docs   = [{"text": text, "ticker": "JPM", "filing_type": "8-K", "path": "test.txt"}]
+        docs = [{"text": text, "ticker": "JPM", "filing_type": "8-K", "path": "test.txt"}]
         chunks = chunk_fn(docs)
         for c in chunks:
             assert len(c["text"].strip()) >= 50, (
@@ -665,7 +665,7 @@ class TestChunker:
         Prevents phantom vectors in the FAISS index from filings that
         failed to parse (blank text fields from sec_loader error handling).
         """
-        docs   = [{"text": "   \n  ", "ticker": "JPM", "filing_type": "10-K", "path": "empty.txt"}]
+        docs = [{"text": "   \n  ", "ticker": "JPM", "filing_type": "10-K", "path": "empty.txt"}]
         chunks = chunk_fn(docs)
         assert chunks == [], f"Empty document produced {len(chunks)} chunks"
 
@@ -676,14 +676,16 @@ class TestChunker:
         ticker would break company-scoped retrieval queries.
         """
         docs = [
-            {"text": "JPMorgan AML compliance requirements. " * 20, "ticker": "JPM", "filing_type": "10-K", "path": "jpm.txt"},
-            {"text": "Goldman Sachs capital adequacy disclosures. " * 20, "ticker": "GS",  "filing_type": "10-Q", "path": "gs.txt"},
+            {"text": "JPMorgan AML compliance requirements. " *
+             20, "ticker": "JPM", "filing_type": "10-K", "path": "jpm.txt"},
+            {"text": "Goldman Sachs capital adequacy disclosures. " * 20,
+                "ticker": "GS", "filing_type": "10-Q", "path": "gs.txt"},
         ]
         chunks = chunk_fn(docs)
         jpm_chunks = [c for c in chunks if c["metadata"]["ticker"] == "JPM"]
-        gs_chunks  = [c for c in chunks if c["metadata"]["ticker"] == "GS"]
+        gs_chunks = [c for c in chunks if c["metadata"]["ticker"] == "GS"]
         assert len(jpm_chunks) > 0
-        assert len(gs_chunks)  > 0
+        assert len(gs_chunks) > 0
         # Every JPM chunk must have JPM metadata and vice versa
         for c in jpm_chunks:
             assert c["metadata"]["filing_type"] == "10-K"
@@ -711,10 +713,10 @@ class TestTransactionGeneratorFraudRate:
 
     # These constants are copied from the source file. If they change, this test
     # will catch the discrepancy when the CSV strategy B also runs.
-    TOTAL        = 500_000
-    FRAUD_RATE   = 0.02
-    N_FRAUD      = int(TOTAL * FRAUD_RATE)   # = 10,000
-    N_NORMAL     = TOTAL - N_FRAUD           # = 490,000
+    TOTAL = 500_000
+    FRAUD_RATE = 0.02
+    N_FRAUD = int(TOTAL * FRAUD_RATE)   # = 10,000
+    N_NORMAL = TOTAL - N_FRAUD           # = 490,000
     N_PER_PATTERN = N_FRAUD // 4             # = 2,500  (4 fraud patterns)
 
     def test_fraud_count_arithmetic(self):

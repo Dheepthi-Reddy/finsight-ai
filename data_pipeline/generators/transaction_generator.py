@@ -69,7 +69,9 @@ def _random_ts(start=START_DATE, end=END_DATE):
 
 # Weights concentrate transactions in waking hours (8 AM – 10 PM) to match
 # the observed distribution of legitimate card activity.
-_HOUR_WEIGHTS = [1]*6 + [2]*2 + [5]*13 + [3]*2 + [1]*1
+_HOUR_WEIGHTS = [1] * 6 + [2] * 2 + [5] * 13 + [3] * 2 + [1] * 1
+
+
 def _daytime_hour():
     return random.choices(range(24), weights=_HOUR_WEIGHTS)[0]
 
@@ -230,7 +232,7 @@ print(f"\nSaved to {output_path}")
 print(f"  Total        : {total:,}")
 print(f"  Legitimate   : {total - fraud_count:,}  ({(total - fraud_count) / total * 100:.1f}%)")
 print(f"  Fraud        : {fraud_count:,}  ({fraud_count / total * 100:.1f}%)")
-print(f"\nFraud breakdown:")
+print("\nFraud breakdown:")
 print(df[df["is_fraud"] == 1]["fraud_type"].value_counts().to_string())
-print(f"\nAmount stats by class:")
+print("\nAmount stats by class:")
 print(df.groupby("is_fraud")["amount"].describe().round(2).to_string())

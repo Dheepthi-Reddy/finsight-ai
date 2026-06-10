@@ -31,8 +31,6 @@ response so downstream consumers know the velocity signal was approximate.
 from __future__ import annotations
 
 import math
-import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -47,21 +45,21 @@ router = APIRouter()
 # Kept here rather than imported from the data pipeline to avoid a cross-module
 # dependency between the API and a Spark job.
 MERCHANT_RISK: dict[str, float] = {
-    "grocery":        0.05,
-    "restaurant":     0.05,
-    "gas_station":    0.10,
-    "retail":         0.10,
-    "pharmacy":       0.05,
-    "entertainment":  0.10,
-    "travel":         0.20,
-    "subscription":   0.05,
-    "utilities":      0.05,
-    "healthcare":     0.05,
-    "pawn_shop":      0.90,
-    "wire_transfer":  0.95,
-    "crypto_exchange":0.90,
-    "money_order":    0.85,
-    "check_cashing":  0.85,
+    "grocery": 0.05,
+    "restaurant": 0.05,
+    "gas_station": 0.10,
+    "retail": 0.10,
+    "pharmacy": 0.05,
+    "entertainment": 0.10,
+    "travel": 0.20,
+    "subscription": 0.05,
+    "utilities": 0.05,
+    "healthcare": 0.05,
+    "pawn_shop": 0.90,
+    "wire_transfer": 0.95,
+    "crypto_exchange": 0.90,
+    "money_order": 0.85,
+    "check_cashing": 0.85,
 }
 
 VALID_MERCHANT_CATEGORIES = sorted(MERCHANT_RISK.keys())
@@ -204,14 +202,14 @@ class TransactionRequest(BaseModel):
 
     model_config = {"json_schema_extra": {
         "example": {
-            "transaction_id":    "txn-8821",
-            "amount":            3200.00,
+            "transaction_id": "txn-8821",
+            "amount": 3200.00,
             "merchant_category": "wire_transfer",
-            "hour_of_day":       2,
-            "day_of_week":       6,
-            "account_age_bucket":0,
-            "txn_count_1h":      6,
-            "amount_sum_1h":     9800.00,
+            "hour_of_day": 2,
+            "day_of_week": 6,
+            "account_age_bucket": 0,
+            "txn_count_1h": 6,
+            "amount_sum_1h": 9800.00,
         }
     }}
 
@@ -227,18 +225,21 @@ class FeaturesUsed(BaseModel):
     Included in the response so analysts and downstream systems can audit
     exactly what the model received, without reading the API source code.
     """
-    amount:             float = Field(description="Raw transaction amount in USD.")
-    amount_log:         float = Field(description="log1p(amount) — compresses the skewed amount distribution.")
-    amount_x_risk:      float = Field(description="amount × merchant risk weight — the model's primary fraud signal.")
-    amount_sum_1h:      float = Field(description="Total spend by this user in the preceding hour.")
-    txn_count_1h:       int   = Field(description="Number of transactions by this user in the preceding hour.")
-    hour_of_day:        int   = Field(description="Hour of the transaction (0–23).")
-    day_of_week:        int   = Field(description="Day of the week (0=Monday, 6=Sunday).")
-    is_night:           int   = Field(description="1 if hour_of_day is 0–5 (midnight to 5:59 AM), else 0.")
-    is_weekend:         int   = Field(description="1 if day_of_week is Saturday (5) or Sunday (6), else 0.")
-    account_age_bucket: int   = Field(description="Account age tier: 0=new, 1=mid, 2=established.")
-    merchant_category:  str   = Field(description="Raw merchant category string (pre-encoding).")
-    velocity_estimated: bool  = Field(
+    amount: float = Field(description="Raw transaction amount in USD.")
+    amount_log: float = Field(
+        description="log1p(amount) — compresses the skewed amount distribution.")
+    amount_x_risk: float = Field(
+        description="amount × merchant risk weight — the model's primary fraud signal.")
+    amount_sum_1h: float = Field(description="Total spend by this user in the preceding hour.")
+    txn_count_1h: int = Field(
+        description="Number of transactions by this user in the preceding hour.")
+    hour_of_day: int = Field(description="Hour of the transaction (0–23).")
+    day_of_week: int = Field(description="Day of the week (0=Monday, 6=Sunday).")
+    is_night: int = Field(description="1 if hour_of_day is 0–5 (midnight to 5:59 AM), else 0.")
+    is_weekend: int = Field(description="1 if day_of_week is Saturday (5) or Sunday (6), else 0.")
+    account_age_bucket: int = Field(description="Account age tier: 0=new, 1=mid, 2=established.")
+    merchant_category: str = Field(description="Raw merchant category string (pre-encoding).")
+    velocity_estimated: bool = Field(
         description=(
             "True if txn_count_1h or amount_sum_1h were not supplied by the caller "
             "and were defaulted to conservative estimates. "
@@ -320,24 +321,24 @@ def _engineer_features(req: TransactionRequest) -> tuple[dict[str, Any], bool]:
     # compare against the original request defaults.
     velocity_estimated = (req.txn_count_1h == 1 and req.amount_sum_1h == req.amount)
 
-    risk_weight    = MERCHANT_RISK[req.merchant_category]
-    amount_log     = round(math.log1p(req.amount), 6)
-    amount_x_risk  = round(req.amount * risk_weight, 4)
-    is_night       = 1 if req.hour_of_day <= 5 else 0
-    is_weekend     = 1 if req.day_of_week >= 5 else 0
+    risk_weight = MERCHANT_RISK[req.merchant_category]
+    amount_log = round(math.log1p(req.amount), 6)
+    amount_x_risk = round(req.amount * risk_weight, 4)
+    is_night = 1 if req.hour_of_day <= 5 else 0
+    is_weekend = 1 if req.day_of_week >= 5 else 0
 
     features: dict[str, Any] = {
-        "amount":             req.amount,
-        "amount_log":         amount_log,
-        "amount_x_risk":      amount_x_risk,
-        "amount_sum_1h":      req.amount_sum_1h,
-        "txn_count_1h":       req.txn_count_1h,
-        "hour_of_day":        req.hour_of_day,
-        "day_of_week":        req.day_of_week,
-        "is_night":           is_night,
-        "is_weekend":         is_weekend,
+        "amount": req.amount,
+        "amount_log": amount_log,
+        "amount_x_risk": amount_x_risk,
+        "amount_sum_1h": req.amount_sum_1h,
+        "txn_count_1h": req.txn_count_1h,
+        "hour_of_day": req.hour_of_day,
+        "day_of_week": req.day_of_week,
+        "is_night": is_night,
+        "is_weekend": is_weekend,
         "account_age_bucket": req.account_age_bucket,
-        "merchant_category":  req.merchant_category,
+        "merchant_category": req.merchant_category,
     }
     if req.transaction_id:
         features["transaction_id"] = req.transaction_id
@@ -351,17 +352,17 @@ def _engineer_features(req: TransactionRequest) -> tuple[dict[str, Any], bool]:
 
 @router.post(
     "/score",
-    response_model = ScoreResponse,
-    status_code    = status.HTTP_200_OK,
-    summary        = "Score a transaction for fraud",
-    description    = (
+    response_model=ScoreResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Score a transaction for fraud",
+    description=(
         "Accepts a raw transaction, engineers model features, and returns a "
         "fraud probability, risk tier, and the exact feature values used by the model."
     ),
 )
 async def score_transaction(
     request: Request,
-    body:    TransactionRequest,
+    body: TransactionRequest,
 ) -> ScoreResponse:
     """
     Score a single transaction for fraud risk.
@@ -379,8 +380,8 @@ async def score_transaction(
     predictor = getattr(request.app.state, "predictor", None)
     if predictor is None:
         raise HTTPException(
-            status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail      = (
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
                 "Fraud model is not loaded. The server may still be starting up, "
                 "or the model artifacts are missing. Check GET /health/ready."
             ),
@@ -391,8 +392,8 @@ async def score_transaction(
         txn_features, velocity_estimated = _engineer_features(body)
     except Exception as exc:
         raise HTTPException(
-            status_code = status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail      = f"Feature engineering failed: {exc}",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Feature engineering failed: {exc}",
         ) from exc
 
     # ── Model inference ────────────────────────────────────────────────────────
@@ -402,34 +403,34 @@ async def score_transaction(
         # ValueError means a required feature column was missing or an unknown
         # merchant_category slipped through. This is a caller error.
         raise HTTPException(
-            status_code = status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail      = f"Scoring failed — invalid input: {exc}",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Scoring failed — invalid input: {exc}",
         ) from exc
     except Exception as exc:
         raise HTTPException(
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail      = f"Scoring failed — internal error: {exc}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Scoring failed — internal error: {exc}",
         ) from exc
 
     # ── Assemble response ─────────────────────────────────────────────────────
     return ScoreResponse(
-        transaction_id    = result.transaction_id,
-        fraud_probability = round(result.fraud_probability, 4),
-        is_fraud          = result.is_fraud,
-        risk_level        = result.risk_level,
-        scored_at         = result.scored_at,
-        features_used     = FeaturesUsed(
-            amount             = txn_features["amount"],
-            amount_log         = txn_features["amount_log"],
-            amount_x_risk      = txn_features["amount_x_risk"],
-            amount_sum_1h      = txn_features["amount_sum_1h"],
-            txn_count_1h       = txn_features["txn_count_1h"],
-            hour_of_day        = txn_features["hour_of_day"],
-            day_of_week        = txn_features["day_of_week"],
-            is_night           = txn_features["is_night"],
-            is_weekend         = txn_features["is_weekend"],
-            account_age_bucket = txn_features["account_age_bucket"],
-            merchant_category  = txn_features["merchant_category"],
-            velocity_estimated = velocity_estimated,
+        transaction_id=result.transaction_id,
+        fraud_probability=round(result.fraud_probability, 4),
+        is_fraud=result.is_fraud,
+        risk_level=result.risk_level,
+        scored_at=result.scored_at,
+        features_used=FeaturesUsed(
+            amount=txn_features["amount"],
+            amount_log=txn_features["amount_log"],
+            amount_x_risk=txn_features["amount_x_risk"],
+            amount_sum_1h=txn_features["amount_sum_1h"],
+            txn_count_1h=txn_features["txn_count_1h"],
+            hour_of_day=txn_features["hour_of_day"],
+            day_of_week=txn_features["day_of_week"],
+            is_night=txn_features["is_night"],
+            is_weekend=txn_features["is_weekend"],
+            account_age_bucket=txn_features["account_age_bucket"],
+            merchant_category=txn_features["merchant_category"],
+            velocity_estimated=velocity_estimated,
         ),
     )

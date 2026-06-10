@@ -34,7 +34,6 @@ import time
 import textwrap
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Optional
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 DEFAULT_TICKERS = ["AAPL", "MSFT", "GOOGL", "JPM", "BAC", "GS", "MS", "WFC", "C", "BLK"]
@@ -44,7 +43,7 @@ DOWNLOAD_DIR = Path("data/sec_filings")
 # SEC EDGAR requires a User-Agent header identifying the requester.
 # These values are used if the real downloader is available.
 SEC_USER_COMPANY = os.getenv("SEC_USER_COMPANY", "FinSight AI Research")
-SEC_USER_EMAIL   = os.getenv("SEC_USER_EMAIL",   "research@finsight-ai.dev")
+SEC_USER_EMAIL = os.getenv("SEC_USER_EMAIL", "research@finsight-ai.dev")
 
 # Limits per ticker per filing type — keep download size reasonable for dev
 FILING_LIMITS = {"10-K": 2, "10-Q": 4, "8-K": 5}
@@ -55,16 +54,16 @@ MAX_TEXT_CHARS = 80_000
 
 # Full legal names for stub generation (no API needed to look these up)
 COMPANY_NAMES: dict[str, str] = {
-    "AAPL":  "Apple Inc.",
-    "MSFT":  "Microsoft Corporation",
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
     "GOOGL": "Alphabet Inc.",
-    "JPM":   "JPMorgan Chase & Co.",
-    "BAC":   "Bank of America Corporation",
-    "GS":    "The Goldman Sachs Group, Inc.",
-    "MS":    "Morgan Stanley",
-    "WFC":   "Wells Fargo & Company",
-    "C":     "Citigroup Inc.",
-    "BLK":   "BlackRock, Inc.",
+    "JPM": "JPMorgan Chase & Co.",
+    "BAC": "Bank of America Corporation",
+    "GS": "The Goldman Sachs Group, Inc.",
+    "MS": "Morgan Stanley",
+    "WFC": "Wells Fargo & Company",
+    "C": "Citigroup Inc.",
+    "BLK": "BlackRock, Inc.",
 }
 
 
@@ -135,10 +134,10 @@ def _download_real(
                 if not text:
                     continue
                 docs.append({
-                    "text":        text[:MAX_TEXT_CHARS],
-                    "ticker":      ticker,
+                    "text": text[:MAX_TEXT_CHARS],
+                    "ticker": ticker,
                     "filing_type": ftype,
-                    "path":        str(accession_dir),
+                    "path": str(accession_dir),
                 })
 
     return docs
@@ -182,19 +181,19 @@ def _generate_stubs(tickers: list[str], filing_types: list[str], out_dir: Path) 
         for ftype in filing_types:
             limit = FILING_LIMITS.get(ftype, 3)
             for i in range(1, limit + 1):
-                year   = 2024 - (i - 1)
+                year = 2024 - (i - 1)
                 period = f"Q{(i % 4) + 1} {year}" if ftype == "10-Q" else str(year)
-                path   = out_dir / ticker / ftype / f"stub_{i:02d}.txt"
+                path = out_dir / ticker / ftype / f"stub_{i:02d}.txt"
                 path.parent.mkdir(parents=True, exist_ok=True)
 
                 text = _render_stub(ticker, company, ftype, year, period, i)
                 path.write_text(text, encoding="utf-8")
 
                 docs.append({
-                    "text":        text,
-                    "ticker":      ticker,
+                    "text": text,
+                    "ticker": ticker,
                     "filing_type": ftype,
-                    "path":        str(path),
+                    "path": str(path),
                 })
 
     return docs
@@ -296,24 +295,24 @@ def _stub_10k(ticker: str, company: str, year: int) -> str:
 
         Overview
         For the fiscal year ended December 31, {year}, {company} reported net
-        revenues of approximately ${"%.1f" % (abs(hash(ticker+str(year))) % 60 + 20)}B
+        revenues of approximately ${"%.1f" % (abs(hash(ticker + str(year))) % 60 + 20)}B
         and net income attributable to common shareholders of approximately
-        ${"%.1f" % (abs(hash(ticker+str(year))) % 15 + 5)}B. Return on equity was
+        ${"%.1f" % (abs(hash(ticker + str(year))) % 15 + 5)}B. Return on equity was
         {"%.1f" % (abs(hash(ticker)) % 12 + 8)}%.
 
         Capital and Liquidity
         The Company maintains capital ratios in excess of regulatory minimums under
         Basel III requirements. Common Equity Tier 1 (CET1) capital ratio was
-        {"%.1f" % (abs(hash(ticker+str(year+1))) % 4 + 12)}% as of December 31,
+        {"%.1f" % (abs(hash(ticker + str(year + 1))) % 4 + 12)}% as of December 31,
         {year}, compared to the 4.5% minimum plus the 2.5% capital conservation
         buffer required by regulation. The Liquidity Coverage Ratio (LCR) and Net
         Stable Funding Ratio (NSFR) both exceeded 100% throughout the year.
 
         Anti-Money Laundering Program
-        The Company filed {abs(hash(ticker+str(year+2))) % 2000 + 500} Suspicious
+        The Company filed {abs(hash(ticker + str(year + 2))) % 2000 + 500} Suspicious
         Activity Reports (SARs) with FinCEN during {year}. The Company's transaction
         monitoring system reviewed over {abs(hash(ticker)) % 500 + 100} million
-        transactions and escalated {abs(hash(ticker+str(year+3))) % 50000 + 10000}
+        transactions and escalated {abs(hash(ticker + str(year + 3))) % 50000 + 10000}
         alerts for analyst review. No material AML enforcement actions were taken
         against the Company during {year}.
 
@@ -338,8 +337,8 @@ def _stub_10k(ticker: str, company: str, year: int) -> str:
 
         ITEM 14. PRINCIPAL ACCOUNTANT FEES AND SERVICES
         Audit Fees: ${abs(hash(ticker)) % 40 + 10}M
-        Audit-Related Fees: ${abs(hash(ticker+str(year))) % 8 + 2}M
-        Tax Fees: ${abs(hash(ticker+str(year+1))) % 5 + 1}M
+        Audit-Related Fees: ${abs(hash(ticker + str(year))) % 8 + 2}M
+        Tax Fees: ${abs(hash(ticker + str(year + 1))) % 5 + 1}M
     """)
 
 
@@ -367,9 +366,9 @@ def _stub_10q(ticker: str, company: str, period: str) -> str:
         principles (GAAP) and applicable SEC regulations for interim financial
         information.
 
-        Net revenues for {period}: ${abs(hash(ticker+period)) % 20 + 5}B
-        Provision for credit losses: ${abs(hash(ticker+period+"p")) % 3 + 1}B
-        Net income: ${abs(hash(ticker+period+"n")) % 5 + 1}B
+        Net revenues for {period}: ${abs(hash(ticker + period)) % 20 + 5}B
+        Provision for credit losses: ${abs(hash(ticker + period + "p")) % 3 + 1}B
+        Net income: ${abs(hash(ticker + period + "n")) % 5 + 1}B
 
         ITEM 2. MANAGEMENT'S DISCUSSION AND ANALYSIS
 
@@ -381,14 +380,14 @@ def _stub_10q(ticker: str, company: str, period: str) -> str:
 
         AML and Sanctions Compliance
         Transaction monitoring enhancements deployed during the quarter reduced
-        false-positive alert rates by {abs(hash(ticker+period+"aml")) % 15 + 5}%
+        false-positive alert rates by {abs(hash(ticker + period + "aml")) % 15 + 5}%
         while maintaining detection coverage. The Company updated its OFAC
         screening lists to reflect new Treasury SDN designations. No SAR filing
         deficiencies were identified during the quarter.
 
         Fraud Metrics
-        Fraud losses for {period} were ${abs(hash(ticker+period+"f")) % 200 + 50}M,
-        representing {"%.2f" % (abs(hash(ticker+period+"fr")) % 10 / 100 + 0.01)}%
+        Fraud losses for {period} were ${abs(hash(ticker + period + "f")) % 200 + 50}M,
+        representing {"%.2f" % (abs(hash(ticker + period + "fr")) % 10 / 100 + 0.01)}%
         of total transaction volume. The Company's machine learning fraud models
         maintained precision above 90% and recall above 85% for card-not-present
         fraud detection.
@@ -438,11 +437,11 @@ def _stub_8k(ticker: str, company: str, year: int, idx: int) -> str:
             "QUARTERLY EARNINGS AND FRAUD DISCLOSURE",
             f"{company} today reported financial results for the quarter. "
             f"The Company also disclosed that it identified a fraud incident affecting "
-            f"approximately {abs(hash(ticker+str(year+idx))) % 5000 + 500} customer "
+            f"approximately {abs(hash(ticker + str(year + idx))) % 5000 + 500} customer "
             f"accounts. The incident involved unauthorized access through compromised "
             f"credentials. The Company has notified affected customers, reset "
             f"credentials, and filed required SARs with FinCEN. Estimated losses "
-            f"are ${abs(hash(ticker+str(year))) % 50 + 5}M, substantially covered "
+            f"are ${abs(hash(ticker + str(year))) % 50 + 5}M, substantially covered "
             f"by the Company's fraud loss reserve. The Company has engaged a "
             f"cybersecurity firm to conduct a forensic investigation.",
         ),
@@ -460,10 +459,10 @@ def _stub_8k(ticker: str, company: str, year: int, idx: int) -> str:
             "FINRA INVESTIGATION AND SETTLEMENT",
             f"{company} reached a settlement with FINRA regarding supervisory "
             f"deficiencies in its broker-dealer operations. The Company agreed to "
-            f"pay a fine of ${abs(hash(ticker+str(year+idx+1))) % 20 + 5}M and "
+            f"pay a fine of ${abs(hash(ticker + str(year + idx + 1))) % 20 + 5}M and "
             f"undertake remedial measures including enhanced trade surveillance, "
             f"updated written supervisory procedures, and targeted training. "
-            f"The settlement relates to the period {year-2} through {year-1} and "
+            f"The settlement relates to the period {year - 2} through {year - 1} and "
             f"does not constitute an admission of wrongdoing by the Company.",
         ),
         (
@@ -474,7 +473,7 @@ def _stub_8k(ticker: str, company: str, year: int, idx: int) -> str:
             f"affected customers, and made required notifications to state attorneys "
             f"general and federal regulators. Affected data may include names, "
             f"account numbers, and transaction history for approximately "
-            f"{abs(hash(ticker+str(year+idx+2))) % 100000 + 10000} customers. "
+            f"{abs(hash(ticker + str(year + idx + 2))) % 100000 + 10000} customers. "
             f"The Company has enhanced its security controls and implemented "
             f"additional monitoring. This incident is not expected to have a "
             f"material adverse effect on the Company's financial condition.",
@@ -588,11 +587,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download or stub SEC filings.")
     parser.add_argument("--tickers", nargs="+", default=DEFAULT_TICKERS)
-    parser.add_argument("--types",   nargs="+", default=DEFAULT_FILING_TYPES,
+    parser.add_argument("--types", nargs="+", default=DEFAULT_FILING_TYPES,
                         dest="filing_types")
-    parser.add_argument("--stubs",   action="store_true",
+    parser.add_argument("--stubs", action="store_true",
                         help="Force stub generation even if sec-edgar-downloader is installed")
-    parser.add_argument("--out",     default=str(DOWNLOAD_DIR),
+    parser.add_argument("--out", default=str(DOWNLOAD_DIR),
                         help="Output directory (default: data/sec_filings)")
     args = parser.parse_args()
 

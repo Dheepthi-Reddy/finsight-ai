@@ -53,10 +53,10 @@ from sentence_transformers import SentenceTransformer
 # among freely available models and produces 768-dim vectors that capture
 # nuanced financial/legal language better than the smaller MiniLM variants.
 MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
-EMBED_DIM  = 768   # fixed by the model architecture — must match stored index
+EMBED_DIM = 768   # fixed by the model architecture — must match stored index
 
-INDEX_DIR     = Path("data/faiss_index")
-INDEX_FILE    = INDEX_DIR / "index.faiss"
+INDEX_DIR = Path("data/faiss_index")
+INDEX_FILE = INDEX_DIR / "index.faiss"
 METADATA_FILE = INDEX_DIR / "metadata.json"
 
 # 64 chunks × ~512 chars ≈ modest GPU/CPU batch; larger batches improve
@@ -78,7 +78,7 @@ class FAISSEmbedder:
     def __init__(
         self,
         model_name: str = MODEL_NAME,
-        index_dir:  Path | str = INDEX_DIR,
+        index_dir: Path | str = INDEX_DIR,
     ) -> None:
         self.index_dir = Path(index_dir)
         self.index_dir.mkdir(parents=True, exist_ok=True)
@@ -205,11 +205,11 @@ class FAISSEmbedder:
                 continue
             meta = self._metadata[idx]
             results.append({
-                "text":        meta["text"],
-                "score":       round(float(score), 4),
-                "ticker":      meta.get("ticker", ""),
+                "text": meta["text"],
+                "score": round(float(score), 4),
+                "ticker": meta.get("ticker", ""),
                 "filing_type": meta.get("filing_type", ""),
-                "source":      meta.get("source", ""),
+                "source": meta.get("source", ""),
                 "chunk_index": meta.get("chunk_index", -1),
                 "chunk_count": meta.get("chunk_count", -1),
             })
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     from rag_pipeline.ingestion.sec_loader import load_filings
 
     # Load stubs so the demo works without SEC network access
-    docs   = load_filings(force_stubs=True)
+    docs = load_filings(force_stubs=True)
     chunks = chunk_documents(docs)
 
     embedder = FAISSEmbedder()

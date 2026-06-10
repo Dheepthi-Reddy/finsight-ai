@@ -42,7 +42,6 @@ Endpoint map (prefix /health from main.py)
 
 from __future__ import annotations
 
-import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request
@@ -59,8 +58,8 @@ router = APIRouter()
 
 @router.get(
     "",
-    summary     = "Full service health status",
-    description = "Returns version, uptime, and the loaded state of each ML component.",
+    summary="Full service health status",
+    description="Returns version, uptime, and the loaded state of each ML component.",
 )
 async def health(request: Request) -> JSONResponse:
     """
@@ -71,18 +70,19 @@ async def health(request: Request) -> JSONResponse:
     that alert on non-200 responses do not false-page for partial degradation.
     Use GET /health/ready for a strict binary probe.
     """
-    settings   = get_settings()
+    settings = get_settings()
     started_at = getattr(request.app.state, "started_at", None)
 
     uptime_seconds: float | None = None
     if started_at:
         try:
-            start_ts      = datetime.strptime(started_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            start_ts = datetime.strptime(started_at,
+                                         "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
             uptime_seconds = round((datetime.now(timezone.utc) - start_ts).total_seconds(), 1)
         except ValueError:
             pass
 
-    chain_loaded     = (
+    chain_loaded = (
         getattr(request.app.state, "chain", None) is not None
     )
     predictor_loaded = (
@@ -102,26 +102,26 @@ async def health(request: Request) -> JSONResponse:
     if predictor_loaded:
         p = request.app.state.predictor
         predictor_detail.update({
-            "features":   len(p.feature_cols),
-            "threshold":  round(p.threshold, 4),
+            "features": len(p.feature_cols),
+            "threshold": round(p.threshold, 4),
             "store_size": p.store_size(),
         })
 
     all_healthy = chain_loaded and predictor_loaded
-    status      = "healthy" if all_healthy else "degraded"
+    status = "healthy" if all_healthy else "degraded"
 
     return JSONResponse(
-        status_code = 200,   # always 200 here — use /ready for a strict probe
-        content     = {
-            "status":      status,
-            "service":     "FinSight AI Platform",
-            "version":     request.app.version,
+        status_code=200,   # always 200 here — use /ready for a strict probe
+        content={
+            "status": status,
+            "service": "FinSight AI Platform",
+            "version": request.app.version,
             "environment": settings.env,
-            "timestamp":   datetime.now(timezone.utc).isoformat(),
-            "started_at":  started_at,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "started_at": started_at,
             "uptime_seconds": uptime_seconds,
             "components": {
-                "rag_chain":       chain_detail,
+                "rag_chain": chain_detail,
                 "fraud_predictor": predictor_detail,
             },
         },
@@ -134,8 +134,8 @@ async def health(request: Request) -> JSONResponse:
 
 @router.get(
     "/live",
-    summary     = "Liveness probe",
-    description = "Returns 200 if the process is running. Used by Kubernetes livenessProbe.",
+    summary="Liveness probe",
+    description="Returns 200 if the process is running. Used by Kubernetes livenessProbe.",
 )
 async def liveness() -> JSONResponse:
     """
@@ -157,9 +157,9 @@ async def liveness() -> JSONResponse:
           failureThreshold: 3
     """
     return JSONResponse(
-        status_code = 200,
-        content     = {
-            "status":    "alive",
+        status_code=200,
+        content={
+            "status": "alive",
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )
@@ -171,8 +171,11 @@ async def liveness() -> JSONResponse:
 
 @router.get(
     "/ready",
-    summary     = "Readiness probe",
-    description = "Returns 200 only when all ML components are loaded. Used by Kubernetes readinessProbe.",
+    summary="Readiness probe",
+    description=(
+        "Returns 200 only when all ML components are loaded. "
+        "Used by Kubernetes readinessProbe."
+    ),
 )
 async def readiness(request: Request) -> JSONResponse:
     """
@@ -195,9 +198,9 @@ async def readiness(request: Request) -> JSONResponse:
           periodSeconds: 10
           failureThreshold: 2
     """
-    chain_ready     = getattr(request.app.state, "chain", None) is not None
+    chain_ready = getattr(request.app.state, "chain", None) is not None
     predictor_ready = getattr(request.app.state, "predictor", None) is not None
-    is_ready        = chain_ready and predictor_ready
+    is_ready = chain_ready and predictor_ready
 
     not_ready = []
     if not chain_ready:
@@ -206,10 +209,10 @@ async def readiness(request: Request) -> JSONResponse:
         not_ready.append("fraud_predictor")
 
     return JSONResponse(
-        status_code = 200 if is_ready else 503,
-        content     = {
-            "status":        "ready" if is_ready else "not_ready",
-            "timestamp":     datetime.now(timezone.utc).isoformat(),
-            "not_ready":     not_ready or None,
+        status_code=200 if is_ready else 503,
+        content={
+            "status": "ready" if is_ready else "not_ready",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "not_ready": not_ready or None,
         },
     )

@@ -307,7 +307,8 @@ def build_fraud_explanation_prompt(
     if isinstance(shap_features, list):
         lines = []
         for i, f in enumerate(shap_features, 1):
-            direction = "↑ increases fraud risk" if f.get("shap_value", 0) > 0 else "↓ decreases fraud risk"
+            direction = "↑ increases fraud risk" if f.get(
+                "shap_value", 0) > 0 else "↓ decreases fraud risk"
             lines.append(
                 f"  {i}. {f.get('feature', '?')}: value={f.get('feature_value', '?')}  {direction}"
             )
@@ -349,17 +350,22 @@ if __name__ == "__main__":
 
     # ── Fraud explanation prompt preview ──────────────────────────────────────
     txn = {
-        "transaction_id":    "txn-8821",
-        "amount":            "$3,200.00",
-        "merchant":          "Global Wire Services",
+        "transaction_id": "txn-8821",
+        "amount": "$3,200.00",
+        "merchant": "Global Wire Services",
         "merchant_category": "wire_transfer",
-        "time":              "2:17 AM on Sunday",
-        "location":          "Miami, FL  (home city: Austin, TX)",
+        "time": "2:17 AM on Sunday",
+        "location": "Miami, FL  (home city: Austin, TX)",
     }
     shap_top3 = [
-        {"feature": "amount_x_risk",     "shap_value": +2.41, "feature_value": 3040.0,  "direction": "increases_fraud_risk"},
-        {"feature": "is_night",           "shap_value": +1.18, "feature_value": 1,        "direction": "increases_fraud_risk"},
-        {"feature": "txn_count_1h",       "shap_value": +0.93, "feature_value": 6,        "direction": "increases_fraud_risk"},
+        {"feature": "amount_x_risk",
+         "shap_value": +2.41,
+         "feature_value": 3040.0,
+         "direction": "increases_fraud_risk"},
+        {"feature": "is_night", "shap_value": +1.18,
+            "feature_value": 1, "direction": "increases_fraud_risk"},
+        {"feature": "txn_count_1h", "shap_value": +0.93,
+            "feature_value": 6, "direction": "increases_fraud_risk"},
     ]
     fraud_user = build_fraud_explanation_prompt(
         transaction_details=txn,

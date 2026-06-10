@@ -29,6 +29,7 @@ Usage
     analyzer.beeswarm()          # saves plot to fraud_model/artifacts/
 """
 
+import matplotlib.pyplot as plt
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -43,17 +44,16 @@ import shap
 # servers; "Agg" renders to PNG without needing a display.
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 # ── Artifact paths (relative to project root) ─────────────────────────────────
-ARTIFACTS_DIR     = Path("fraud_model/artifacts")
-MODEL_PATH        = ARTIFACTS_DIR / "fraud_model.joblib"
-EXPLAINER_PATH    = ARTIFACTS_DIR / "shap_explainer.joblib"
+ARTIFACTS_DIR = Path("fraud_model/artifacts")
+MODEL_PATH = ARTIFACTS_DIR / "fraud_model.joblib"
+EXPLAINER_PATH = ARTIFACTS_DIR / "shap_explainer.joblib"
 FEATURE_COLS_PATH = ARTIFACTS_DIR / "feature_cols.json"
-BEESWARM_PATH     = ARTIFACTS_DIR / "shap_beeswarm.png"
+BEESWARM_PATH = ARTIFACTS_DIR / "shap_beeswarm.png"
 
 FEATURES_PARQUET = "data/features.parquet"
-BEESWARM_SAMPLE  = 5_000   # enough rows to show the full distribution without crowding
+BEESWARM_SAMPLE = 5_000   # enough rows to show the full distribution without crowding
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -84,12 +84,12 @@ class TransactionExplanation:
     raw_features : dict
         Original (un-encoded) feature values passed into explain().
     """
-    prediction_proba:  float
-    predicted_label:   int
-    base_value:        float
-    shap_values:       dict = field(default_factory=dict)
-    top_5_drivers:     list = field(default_factory=list)
-    raw_features:      dict = field(default_factory=dict)
+    prediction_proba: float
+    predicted_label: int
+    base_value: float
+    shap_values: dict = field(default_factory=dict)
+    top_5_drivers: list = field(default_factory=list)
+    raw_features: dict = field(default_factory=dict)
 
     def summary(self) -> str:
         lines = [
@@ -128,13 +128,13 @@ class SHAPAnalyzer:
         artifacts_dir = Path(artifacts_dir)
         self._assert_artifacts_exist(artifacts_dir)
 
-        self.model     = joblib.load(artifacts_dir / "fraud_model.joblib")
+        self.model = joblib.load(artifacts_dir / "fraud_model.joblib")
         self.explainer = joblib.load(artifacts_dir / "shap_explainer.joblib")
 
         meta = json.loads((artifacts_dir / "feature_cols.json").read_text())
-        self.feature_cols         = meta["feature_cols"]
-        self.threshold            = meta["best_threshold"]
-        self.category_mapping     = meta["merchant_category_mapping"]  # str → int
+        self.feature_cols = meta["feature_cols"]
+        self.threshold = meta["best_threshold"]
+        self.category_mapping = meta["merchant_category_mapping"]  # str → int
 
         # TreeExplainer.expected_value is the log-odds base value.
         # For binary XGBoost it may be a 1-element array or a scalar.
@@ -170,32 +170,32 @@ class SHAPAnalyzer:
 
         # shap_values shape: (1, n_features) for the positive (fraud) class
         shap_vals = self.explainer.shap_values(row_df)
-        shap_arr  = np.array(shap_vals)[0] if np.array(shap_vals).ndim == 2 else np.array(shap_vals)
+        shap_arr = np.array(shap_vals)[0] if np.array(shap_vals).ndim == 2 else np.array(shap_vals)
 
-        proba         = float(self.model.predict_proba(row_df)[0, 1])
-        predicted     = int(proba >= self.threshold)
-        shap_by_feat  = {f: float(v) for f, v in zip(self.feature_cols, shap_arr)}
+        proba = float(self.model.predict_proba(row_df)[0, 1])
+        predicted = int(proba >= self.threshold)
+        shap_by_feat = {f: float(v) for f, v in zip(self.feature_cols, shap_arr)}
 
         # Top 5 by absolute SHAP — the features that moved this prediction the most
         sorted_feats = sorted(shap_by_feat.items(), key=lambda kv: abs(kv[1]), reverse=True)
         top_5 = [
             {
-                "feature":       feat,
-                "shap_value":    val,
+                "feature": feat,
+                "shap_value": val,
                 # Show the original (pre-encoded) value when available
                 "feature_value": transaction.get(feat, row_df[feat].iloc[0]),
-                "direction":     "increases_fraud_risk" if val > 0 else "decreases_fraud_risk",
+                "direction": "increases_fraud_risk" if val > 0 else "decreases_fraud_risk",
             }
             for feat, val in sorted_feats[:5]
         ]
 
         return TransactionExplanation(
-            prediction_proba = proba,
-            predicted_label  = predicted,
-            base_value       = self.base_value,
-            shap_values      = shap_by_feat,
-            top_5_drivers    = top_5,
-            raw_features     = transaction,
+            prediction_proba=proba,
+            predicted_label=predicted,
+            base_value=self.base_value,
+            shap_values=shap_by_feat,
+            top_5_drivers=top_5,
+            raw_features=transaction,
         )
 
     # ── Public: beeswarm summary plot ────────────────────────────────────────
@@ -329,16 +329,16 @@ if __name__ == "__main__":
 
     # ── Example 1: normal grocery purchase ───────────────────────────────────
     normal_txn = {
-        "amount":            42.50,
-        "amount_log":        3.77,
-        "amount_x_risk":     2.13,    # 42.50 × 0.05 (grocery risk)
-        "amount_sum_1h":     42.50,
-        "txn_count_1h":      1,
-        "hour_of_day":       14,
-        "day_of_week":       2,       # Wednesday
-        "is_night":          0,
-        "is_weekend":        0,
-        "account_age_bucket":2,       # established account
+        "amount": 42.50,
+        "amount_log": 3.77,
+        "amount_x_risk": 2.13,    # 42.50 × 0.05 (grocery risk)
+        "amount_sum_1h": 42.50,
+        "txn_count_1h": 1,
+        "hour_of_day": 14,
+        "day_of_week": 2,       # Wednesday
+        "is_night": 0,
+        "is_weekend": 0,
+        "account_age_bucket": 2,       # established account
         "merchant_category": "grocery",
     }
     print("\n── Example 1: Normal grocery transaction ─────────────────")
@@ -347,16 +347,16 @@ if __name__ == "__main__":
 
     # ── Example 2: high-risk wire transfer at 2 AM ────────────────────────────
     fraud_txn = {
-        "amount":            3200.00,
-        "amount_log":        8.07,
-        "amount_x_risk":     3040.00,  # 3200 × 0.95 (wire_transfer risk)
-        "amount_sum_1h":     9800.00,  # large cumulative spend this hour
-        "txn_count_1h":      6,        # velocity burst signal
-        "hour_of_day":       2,
-        "day_of_week":       6,        # Sunday
-        "is_night":          1,
-        "is_weekend":        1,
-        "account_age_bucket":0,        # new account
+        "amount": 3200.00,
+        "amount_log": 8.07,
+        "amount_x_risk": 3040.00,  # 3200 × 0.95 (wire_transfer risk)
+        "amount_sum_1h": 9800.00,  # large cumulative spend this hour
+        "txn_count_1h": 6,        # velocity burst signal
+        "hour_of_day": 2,
+        "day_of_week": 6,        # Sunday
+        "is_night": 1,
+        "is_weekend": 1,
+        "account_age_bucket": 0,        # new account
         "merchant_category": "wire_transfer",
     }
     print("\n── Example 2: Suspicious wire transfer ───────────────────")

@@ -46,14 +46,14 @@ except ImportError:
     from langchain.text_splitter import RecursiveCharacterTextSplitter  # type: ignore[no-redef]
 
 # ── Chunking parameters ───────────────────────────────────────────────────────
-CHUNK_SIZE    = 512   # characters — fits comfortably within most embedding model
-                      # context windows (e.g. all-MiniLM-L6-v2 has a 256-token limit,
-                      # ~384 chars; 512 chars gives ~1-token headroom with short words)
+CHUNK_SIZE = 512   # characters — fits comfortably within most embedding model
+# context windows (e.g. all-MiniLM-L6-v2 has a 256-token limit,
+# ~384 chars; 512 chars gives ~1-token headroom with short words)
 CHUNK_OVERLAP = 64    # characters — ~12% of chunk size, covering 1–2 boundary sentences
 
 MIN_CHUNK_LEN = 50    # discard chunks shorter than this — they are typically
-                      # page headers, exhibit labels, or lone numbers that carry
-                      # no semantic content and would pollute retrieval results
+# page headers, exhibit labels, or lone numbers that carry
+# no semantic content and would pollute retrieval results
 
 
 def chunk_documents(
@@ -98,8 +98,8 @@ def chunk_documents(
     total_dropped = 0
 
     for doc in documents:
-        raw_text    = doc.get("text", "")
-        ticker      = doc.get("ticker", "UNKNOWN")
+        raw_text = doc.get("text", "")
+        ticker = doc.get("ticker", "UNKNOWN")
         filing_type = doc.get("filing_type", "UNKNOWN")
         source_path = doc.get("path", "")
 
@@ -122,11 +122,11 @@ def chunk_documents(
             all_chunks.append({
                 "text": chunk_text.strip(),
                 "metadata": {
-                    "ticker":       ticker,
-                    "filing_type":  filing_type,
-                    "source":       source_path,
-                    "chunk_index":  idx,
-                    "chunk_count":  chunk_count,
+                    "ticker": ticker,
+                    "filing_type": filing_type,
+                    "source": source_path,
+                    "chunk_index": idx,
+                    "chunk_count": chunk_count,
                 },
             })
 
@@ -144,16 +144,16 @@ def chunk_documents(
 if __name__ == "__main__":
     from rag_pipeline.ingestion.sec_loader import load_filings
 
-    docs   = load_filings(force_stubs=True)
+    docs = load_filings(force_stubs=True)
     chunks = chunk_documents(docs)
 
     # Distribution summary
     from collections import Counter
     by_type = Counter(c["metadata"]["filing_type"] for c in chunks)
-    sizes   = [len(c["text"]) for c in chunks]
+    sizes = [len(c["text"]) for c in chunks]
 
-    print(f"\nChunk size stats:")
-    print(f"  min={min(sizes)}  max={max(sizes)}  avg={sum(sizes)//len(sizes)}")
+    print("\nChunk size stats:")
+    print(f"  min={min(sizes)}  max={max(sizes)}  avg={sum(sizes) // len(sizes)}")
     print(f"By filing type: {dict(by_type)}")
 
     # Spot-check a boundary pair to verify overlap is working

@@ -145,13 +145,13 @@ class AgentState(TypedDict):
     TypedDict (rather than a plain dict) gives IDE type-checking and makes the
     state contract explicit.
     """
-    question:         str             # original user question — read-only after init
-    rewritten_query:  str             # LLM-rewritten query; updated on each attempt
+    question: str             # original user question — read-only after init
+    rewritten_query: str             # LLM-rewritten query; updated on each attempt
     retrieved_chunks: list[dict]      # FAISS chunks for the current rewritten_query
-    answer:           str             # Claude's answer for the current attempt
+    answer: str             # Claude's answer for the current attempt
     evaluation_score: float           # faithfulness score ∈ [0, 1]
-    needs_retry:      bool            # True → router sends flow back to query_rewriter
-    attempts:         int             # how many times query_rewriter has run
+    needs_retry: bool            # True → router sends flow back to query_rewriter
+    attempts: int             # how many times query_rewriter has run
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -172,21 +172,21 @@ class AgenticRAGChain:
 
     def __init__(
         self,
-        embedder:      FAISSEmbedder | None = None,
-        bedrock:       BedrockClient | None = None,
+        embedder: FAISSEmbedder | None = None,
+        bedrock: BedrockClient | None = None,
         retry_threshold: float = RETRY_THRESHOLD,
-        max_attempts:    int   = MAX_ATTEMPTS,
-        top_k:           int   = RETRIEVAL_TOP_K,
-        min_similarity:  float = MIN_SIMILARITY,
+        max_attempts: int = MAX_ATTEMPTS,
+        top_k: int = RETRIEVAL_TOP_K,
+        min_similarity: float = MIN_SIMILARITY,
     ) -> None:
         self.retry_threshold = retry_threshold
-        self.max_attempts    = max_attempts
-        self.top_k           = top_k
-        self.min_similarity  = min_similarity
+        self.max_attempts = max_attempts
+        self.top_k = top_k
+        self.min_similarity = min_similarity
 
         # Shared infrastructure — expensive to load, cheap to reuse.
         self.embedder = embedder if embedder is not None else FAISSEmbedder()
-        self.bedrock  = bedrock  if bedrock  is not None else BedrockClient()
+        self.bedrock = bedrock if bedrock is not None else BedrockClient()
 
         # Compile the LangGraph graph once. compile() validates the graph
         # topology (no dangling edges, START/END reachable) and returns a
@@ -234,13 +234,13 @@ class AgenticRAGChain:
         # Seed the initial state. LangGraph carries all keys forward through
         # every node, updating only the keys each node explicitly returns.
         initial_state: AgentState = {
-            "question":         question,
-            "rewritten_query":  "",
+            "question": question,
+            "rewritten_query": "",
             "retrieved_chunks": [],
-            "answer":           "",
+            "answer": "",
             "evaluation_score": 0.0,
-            "needs_retry":      False,
-            "attempts":         0,
+            "needs_retry": False,
+            "attempts": 0,
         }
 
         # invoke() runs the compiled graph to completion and returns the final
@@ -252,13 +252,13 @@ class AgenticRAGChain:
         sources = _unique_sources(final_state["retrieved_chunks"])
 
         return {
-            "answer":           final_state["answer"],
-            "rewritten_query":  final_state["rewritten_query"],
-            "sources":          sources,
-            "chunks":           final_state["retrieved_chunks"],
+            "answer": final_state["answer"],
+            "rewritten_query": final_state["rewritten_query"],
+            "sources": sources,
+            "chunks": final_state["retrieved_chunks"],
             "evaluation_score": final_state["evaluation_score"],
-            "attempts":         final_state["attempts"],
-            "needs_retry":      final_state["needs_retry"],
+            "attempts": final_state["attempts"],
+            "needs_retry": final_state["needs_retry"],
         }
 
     # ── Graph construction ────────────────────────────────────────────────────
@@ -276,17 +276,17 @@ class AgenticRAGChain:
         # Register nodes — each node is a method on this instance so it has
         # access to self.embedder, self.bedrock, etc. without globals.
         graph.add_node("query_rewriter", self._node_query_rewriter)
-        graph.add_node("retriever",      self._node_retriever)
-        graph.add_node("generator",      self._node_generator)
-        graph.add_node("evaluator",      self._node_evaluator)
-        graph.add_node("router",         self._node_router)
+        graph.add_node("retriever", self._node_retriever)
+        graph.add_node("generator", self._node_generator)
+        graph.add_node("evaluator", self._node_evaluator)
+        graph.add_node("router", self._node_router)
 
         # Linear edges: the happy path flows straight through each node in order.
-        graph.add_edge(START,            "query_rewriter")
+        graph.add_edge(START, "query_rewriter")
         graph.add_edge("query_rewriter", "retriever")
-        graph.add_edge("retriever",      "generator")
-        graph.add_edge("generator",      "evaluator")
-        graph.add_edge("evaluator",      "router")
+        graph.add_edge("retriever", "generator")
+        graph.add_edge("generator", "evaluator")
+        graph.add_edge("evaluator", "router")
 
         # Conditional edge from router: _route_decision() returns either the
         # string "query_rewriter" (retry) or END (finish). LangGraph maps the
@@ -296,7 +296,7 @@ class AgenticRAGChain:
             _route_decision,
             {
                 "query_rewriter": "query_rewriter",
-                END:              END,
+                END: END,
             },
         )
 
@@ -351,10 +351,10 @@ class AgenticRAGChain:
             )
 
         response = self.bedrock.invoke(
-            prompt        = rewrite_prompt,
-            system_prompt = "",
-            max_tokens    = 128,
-            temperature   = 0.3,  # slight creativity for retry rewrites
+            prompt=rewrite_prompt,
+            system_prompt="",
+            max_tokens=128,
+            temperature=0.3,  # slight creativity for retry rewrites
         )
 
         rewritten = response.text.strip()
@@ -371,7 +371,7 @@ class AgenticRAGChain:
 
         return {
             "rewritten_query": rewritten,
-            "attempts":        attempt + 1,
+            "attempts": attempt + 1,
         }
 
     # ── Node: retriever ───────────────────────────────────────────────────────
@@ -385,7 +385,7 @@ class AgenticRAGChain:
         The filtered, capped chunk list is stored in retrieved_chunks so
         every downstream node (generator, evaluator) sees the same set.
         """
-        fetch_k    = min(self.top_k * 3, self.embedder.vector_count or 1)
+        fetch_k = min(self.top_k * 3, self.embedder.vector_count or 1)
         raw_chunks = self.embedder.query(state["rewritten_query"], top_k=fetch_k)
 
         # Apply similarity floor and top_k cap.
@@ -440,13 +440,13 @@ class AgenticRAGChain:
         context = "\n\n".join(context_parts)
 
         user_message = build_compliance_prompt(
-            context  = context,
-            question = state["question"],  # always the original question
+            context=context,
+            question=state["question"],  # always the original question
         )
 
         response = self.bedrock.invoke(
-            prompt        = user_message,
-            system_prompt = COMPLIANCE_SYSTEM_PROMPT,
+            prompt=user_message,
+            system_prompt=COMPLIANCE_SYSTEM_PROMPT,
         )
 
         print(
@@ -480,9 +480,9 @@ class AgenticRAGChain:
         raw_context = " ".join(c["text"] for c in chunks)
 
         eval_result = evaluate_response(
-            answer   = state["answer"],
-            context  = raw_context,
-            question = state["question"],
+            answer=state["answer"],
+            context=raw_context,
+            question=state["question"],
         )
 
         # Use faithfulness as the primary retry signal: it directly measures
@@ -498,7 +498,7 @@ class AgenticRAGChain:
 
         return {
             "evaluation_score": score,
-            "needs_retry":      needs_retry,
+            "needs_retry": needs_retry,
         }
 
     # ── Node: router ──────────────────────────────────────────────────────────
@@ -582,7 +582,7 @@ if __name__ == "__main__":
     from rag_pipeline.ingestion.sec_loader import load_filings
 
     print("Loading stub filings and building FAISS index...")
-    docs   = load_filings(force_stubs=True)
+    docs = load_filings(force_stubs=True)
     chunks = chunk_documents(docs)
 
     embedder = FAISSEmbedder()

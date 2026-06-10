@@ -28,41 +28,41 @@ OUTPUT_PARQUET = "data/features.parquet"
 # primary channels for converting stolen card access into untraceable cash.
 # Everyday merchants score low — fraud there is rare and low-value.
 MERCHANT_RISK = {
-    "grocery":        0.05,
-    "restaurant":     0.05,
-    "gas_station":    0.10,
-    "retail":         0.10,
-    "pharmacy":       0.05,
-    "entertainment":  0.10,
-    "travel":         0.20,   # elevated — card-not-present bookings are common fraud vectors
-    "subscription":   0.05,
-    "utilities":      0.05,
-    "healthcare":     0.05,
-    "pawn_shop":      0.90,
-    "wire_transfer":  0.95,
-    "crypto_exchange":0.90,
-    "money_order":    0.85,
-    "check_cashing":  0.85,
+    "grocery": 0.05,
+    "restaurant": 0.05,
+    "gas_station": 0.10,
+    "retail": 0.10,
+    "pharmacy": 0.05,
+    "entertainment": 0.10,
+    "travel": 0.20,   # elevated — card-not-present bookings are common fraud vectors
+    "subscription": 0.05,
+    "utilities": 0.05,
+    "healthcare": 0.05,
+    "pawn_shop": 0.90,
+    "wire_transfer": 0.95,
+    "crypto_exchange": 0.90,
+    "money_order": 0.85,
+    "check_cashing": 0.85,
 }
 
 # ── Explicit schema ───────────────────────────────────────────────────────────
 # Avoids the inferSchema scan (slow on 500k rows) and guarantees the correct
 # types for window functions that require a numeric ordering column.
 SCHEMA = StructType([
-    StructField("transaction_id",   StringType(),    False),
-    StructField("timestamp",        TimestampType(), True),
-    StructField("user_id",          StringType(),    False),
-    StructField("cardholder_name",  StringType(),    True),
-    StructField("merchant_name",    StringType(),    True),
-    StructField("merchant_category",StringType(),    True),
-    StructField("amount",           DoubleType(),    False),
-    StructField("city",             StringType(),    True),
-    StructField("state",            StringType(),    True),
-    StructField("country",          StringType(),    True),
-    StructField("hour_of_day",      IntegerType(),   True),
-    StructField("day_of_week",      IntegerType(),   True),  # 0=Mon … 6=Sun
-    StructField("is_fraud",         IntegerType(),   False),
-    StructField("fraud_type",       StringType(),    True),
+    StructField("transaction_id", StringType(), False),
+    StructField("timestamp", TimestampType(), True),
+    StructField("user_id", StringType(), False),
+    StructField("cardholder_name", StringType(), True),
+    StructField("merchant_name", StringType(), True),
+    StructField("merchant_category", StringType(), True),
+    StructField("amount", DoubleType(), False),
+    StructField("city", StringType(), True),
+    StructField("state", StringType(), True),
+    StructField("country", StringType(), True),
+    StructField("hour_of_day", IntegerType(), True),
+    StructField("day_of_week", IntegerType(), True),  # 0=Mon … 6=Sun
+    StructField("is_fraud", IntegerType(), False),
+    StructField("fraud_type", StringType(), True),
 ])
 
 
@@ -221,12 +221,12 @@ def build_features(spark: SparkSession) -> None:
     (result
      .groupBy("is_fraud")
      .agg(
-         F.round(F.mean("txn_count_1h"),  2).alias("avg_txn_count_1h"),
+         F.round(F.mean("txn_count_1h"), 2).alias("avg_txn_count_1h"),
          F.round(F.mean("amount_sum_1h"), 2).alias("avg_amount_sum_1h"),
-         F.round(F.mean("amount_log"),    2).alias("avg_amount_log"),
+         F.round(F.mean("amount_log"), 2).alias("avg_amount_log"),
          F.round(F.mean("amount_x_risk"), 2).alias("avg_amount_x_risk"),
-         F.round(F.mean("is_night"),      3).alias("pct_night"),
-         F.round(F.mean("is_weekend"),    3).alias("pct_weekend"),
+         F.round(F.mean("is_night"), 3).alias("pct_night"),
+         F.round(F.mean("is_weekend"), 3).alias("pct_weekend"),
      )
      .orderBy("is_fraud")
      .show(truncate=False))

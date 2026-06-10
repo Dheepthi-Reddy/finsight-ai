@@ -1,0 +1,13 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
+# -- Core ML --
+faker # for creating fake data
+kafka-python # for producing and consuming data streams
+pyspark==3.5.1 # to process data with Spark
+# xgboost==2.0.3 # ML model for fraud detection
+optuna==3.5.0 # for Hyperparameter tuning
+scikit-learn # for splitting data and for evaluation metrics
+nltk          # text tokenization for BLEU score evaluation
+rouge-score   # ROUGE-L metric for RAG response evaluation
+# sentence-transformers # to convert text to vectors/embeddings

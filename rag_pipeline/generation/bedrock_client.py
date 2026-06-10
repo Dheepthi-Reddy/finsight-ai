@@ -75,15 +75,15 @@ except ImportError:
 # ── Configuration ──────────────────────────────────────────────────────────────
 # anthropic.claude-sonnet-4-6-20250514-v1:0 is the Bedrock model ID for
 # Claude Sonnet 4.6 in us-east-1. Model IDs are region-specific on Bedrock.
-MODEL_ID     = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-AWS_REGION   = os.environ.get("AWS_REGION", "us-east-1")
+MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 
 # Bedrock requires this version string in every request body — it pins the
 # Anthropic wire-format version that Bedrock should use to decode the payload.
 ANTHROPIC_VERSION = "bedrock-2023-05-31"
 
 # Sensible defaults for the compliance Q&A use case
-DEFAULT_MAX_TOKENS  = 2048
+DEFAULT_MAX_TOKENS = 2048
 DEFAULT_TEMPERATURE = 0.0   # deterministic answers for factual compliance queries
 
 
@@ -105,12 +105,12 @@ class InvokeResponse:
     is_stub       : bool  True when the response is a local stub (no AWS call).
     stop_reason   : str   Why the model stopped: "end_turn", "max_tokens", etc.
     """
-    text:          str
-    model_id:      str
-    input_tokens:  int
+    text: str
+    model_id: str
+    input_tokens: int
     output_tokens: int
-    is_stub:       bool = False
-    stop_reason:   str  = "end_turn"
+    is_stub: bool = False
+    stop_reason: str = "end_turn"
 
     def __repr__(self) -> str:
         stub_tag = " [STUB]" if self.is_stub else ""
@@ -139,9 +139,9 @@ class BedrockClient:
 
     def __init__(
         self,
-        model_id:   str = MODEL_ID,
-        region:     str = AWS_REGION,
-        stub_mode:  bool | None = None,
+        model_id: str = MODEL_ID,
+        region: str = AWS_REGION,
+        stub_mode: bool | None = None,
     ) -> None:
         """
         Parameters
@@ -157,9 +157,9 @@ class BedrockClient:
             Force stub mode on (True) or off (False). None = auto-detect:
             checks boto3 availability and credential validity at init time.
         """
-        self.model_id  = model_id
-        self.region    = region
-        self._client   = None
+        self.model_id = model_id
+        self.region = region
+        self._client = None
 
         # Explicit override → respect it.
         if stub_mode is True or os.environ.get("BEDROCK_STUB", "").lower() == "true":
@@ -169,7 +169,7 @@ class BedrockClient:
 
         if stub_mode is False:
             self._stub_mode = False
-            self._client    = self._build_client()
+            self._client = self._build_client()
             return
 
         # Auto-detect: try to build a real client; fall back to stub on any
@@ -183,10 +183,10 @@ class BedrockClient:
 
     def invoke(
         self,
-        prompt:        str,
-        system_prompt: str  = "",
-        max_tokens:    int  = DEFAULT_MAX_TOKENS,
-        temperature:   float = DEFAULT_TEMPERATURE,
+        prompt: str,
+        system_prompt: str = "",
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE,
     ) -> InvokeResponse:
         """
         Send a single user message to Claude and return the full response.
@@ -223,10 +223,10 @@ class BedrockClient:
 
     def invoke_stream(
         self,
-        prompt:        str,
-        system_prompt: str   = "",
-        max_tokens:    int   = DEFAULT_MAX_TOKENS,
-        temperature:   float = DEFAULT_TEMPERATURE,
+        prompt: str,
+        system_prompt: str = "",
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE,
     ):
         """
         Stream Claude's response token-by-token.
@@ -255,16 +255,16 @@ class BedrockClient:
         # invoke_model_with_response_stream returns an EventStream; each event
         # contains a "chunk" key with a Base64-encoded JSON delta payload.
         response = self._client.invoke_model_with_response_stream(
-            modelId     = self.model_id,
-            contentType = "application/json",
-            accept      = "application/json",
-            body        = json.dumps(body),
+            modelId=self.model_id,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(body),
         )
 
-        full_text     = []
-        input_tokens  = 0
+        full_text = []
+        input_tokens = 0
         output_tokens = 0
-        stop_reason   = "end_turn"
+        stop_reason = "end_turn"
 
         for event in response["body"]:
             chunk = json.loads(event["chunk"]["bytes"])
@@ -287,21 +287,21 @@ class BedrockClient:
                 output_tokens = usage.get("output_tokens", output_tokens)
 
         yield InvokeResponse(
-            text          = "".join(full_text),
-            model_id      = self.model_id,
-            input_tokens  = input_tokens,
-            output_tokens = output_tokens,
-            stop_reason   = stop_reason,
+            text="".join(full_text),
+            model_id=self.model_id,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            stop_reason=stop_reason,
         )
 
     # ── Private: live invocation ──────────────────────────────────────────────
 
     def _live_invoke(
         self,
-        prompt:        str,
+        prompt: str,
         system_prompt: str,
-        max_tokens:    int,
-        temperature:   float,
+        max_tokens: int,
+        temperature: float,
     ) -> InvokeResponse:
         """Build the request body, call Bedrock, parse the response."""
         body = self._build_body(prompt, system_prompt, max_tokens, temperature)
@@ -310,10 +310,10 @@ class BedrockClient:
         # the full response and returns it in a single HTTP response body once
         # generation is complete.
         raw = self._client.invoke_model(
-            modelId     = self.model_id,
-            contentType = "application/json",
-            accept      = "application/json",
-            body        = json.dumps(body),
+            modelId=self.model_id,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(body),
         )
 
         # The response body is a streaming object; read() returns raw bytes.
@@ -330,19 +330,19 @@ class BedrockClient:
         usage = response_body.get("usage", {})
 
         return InvokeResponse(
-            text          = text,
-            model_id      = self.model_id,
-            input_tokens  = usage.get("input_tokens",  0),
-            output_tokens = usage.get("output_tokens", 0),
-            stop_reason   = response_body.get("stop_reason", "end_turn"),
+            text=text,
+            model_id=self.model_id,
+            input_tokens=usage.get("input_tokens", 0),
+            output_tokens=usage.get("output_tokens", 0),
+            stop_reason=response_body.get("stop_reason", "end_turn"),
         )
 
     @staticmethod
     def _build_body(
-        prompt:        str,
+        prompt: str,
         system_prompt: str,
-        max_tokens:    int,
-        temperature:   float,
+        max_tokens: int,
+        temperature: float,
     ) -> dict[str, Any]:
         """
         Construct the Bedrock-flavoured Anthropic Messages API request body.
@@ -352,8 +352,8 @@ class BedrockClient:
         """
         body: dict[str, Any] = {
             "anthropic_version": ANTHROPIC_VERSION,
-            "max_tokens":        max_tokens,
-            "temperature":       temperature,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
             "messages": [
                 {"role": "user", "content": prompt},
             ],
@@ -432,10 +432,10 @@ class BedrockClient:
 
     def _stub_response(
         self,
-        prompt:        str,
+        prompt: str,
         system_prompt: str,
-        max_tokens:    int,
-        temperature:   float,
+        max_tokens: int,
+        temperature: float,
     ) -> InvokeResponse:
         """
         Return a canned InvokeResponse without calling AWS.
@@ -458,16 +458,16 @@ class BedrockClient:
 
         # Rough token estimate: 4 chars ≈ 1 token (GPT-family heuristic, close
         # enough for budget calculations in tests and monitoring dashboards).
-        estimated_input  = (len(prompt) + len(system_prompt)) // 4
+        estimated_input = (len(prompt) + len(system_prompt)) // 4
         estimated_output = len(stub_text) // 4
 
         return InvokeResponse(
-            text          = stub_text,
-            model_id      = self.model_id,
-            input_tokens  = estimated_input,
-            output_tokens = estimated_output,
-            is_stub       = True,
-            stop_reason   = "end_turn",
+            text=stub_text,
+            model_id=self.model_id,
+            input_tokens=estimated_input,
+            output_tokens=estimated_output,
+            is_stub=True,
+            stop_reason="end_turn",
         )
 
 
@@ -500,7 +500,7 @@ if __name__ == "__main__":
               f"stop={r.stop_reason}  stub={r.is_stub}")
         print(f"   {r.text[:300].strip()}{'...' if len(r.text) > 300 else ''}")
 
-    print(f"\n── Streaming demo ──")
+    print("\n── Streaming demo ──")
     chunks = []
     for item in client.invoke_stream(
         prompt="Summarise the key AML risk disclosures banks include in their annual reports.",

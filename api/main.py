@@ -159,8 +159,8 @@ async def lifespan(app: FastAPI):
     # "connection was closed in the middle of a query" errors in PostgreSQL
     # connection pools and unclosed socket warnings in test output.
     logger.info("Shutting down FinSight AI Platform...")
-    app.state.chain      = None
-    app.state.predictor  = None
+    app.state.chain = None
+    app.state.predictor = None
     logger.info("Shutdown complete.")
 
 
@@ -169,19 +169,19 @@ async def lifespan(app: FastAPI):
 # ─────────────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title       = "FinSight AI Platform",
-    version     = "1.0.0",
-    description = (
+    title="FinSight AI Platform",
+    version="1.0.0",
+    description=(
         "ML-powered financial intelligence platform providing real-time fraud "
         "detection, SHAP-based transaction explanations, and RAG-assisted "
         "compliance Q&A over SEC filings."
     ),
     # Expose OpenAPI docs in development; disable in production to reduce the
     # attack surface (the /docs and /redoc endpoints don't require auth).
-    docs_url    = "/docs"    if get_settings().debug else None,
-    redoc_url   = "/redoc"   if get_settings().debug else None,
-    openapi_url = "/openapi.json" if get_settings().debug else None,
-    lifespan    = lifespan,
+    docs_url="/docs" if get_settings().debug else None,
+    redoc_url="/redoc" if get_settings().debug else None,
+    openapi_url="/openapi.json" if get_settings().debug else None,
+    lifespan=lifespan,
 )
 
 
@@ -218,10 +218,10 @@ _cors_origins = (
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins     = _cors_origins,
-    allow_credentials = True,
-    allow_methods     = ["*"],
-    allow_headers     = ["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -268,10 +268,10 @@ if health_router is not None:
     app.include_router(health_router.router, prefix="/health", tags=["Health"])
 
 if fraud_router is not None:
-    app.include_router(fraud_router.router, prefix="/fraud",  tags=["Fraud Detection"])
+    app.include_router(fraud_router.router, prefix="/fraud", tags=["Fraud Detection"])
 
 if query_router is not None:
-    app.include_router(query_router.router, prefix="/query",  tags=["Compliance Q&A"])
+    app.include_router(query_router.router, prefix="/query", tags=["Compliance Q&A"])
 
 if explain_router is not None:
     app.include_router(explain_router.router, prefix="/explain", tags=["Explainability"])
@@ -283,10 +283,10 @@ if explain_router is not None:
 
 @app.get(
     "/",
-    summary     = "Service info",
-    description = "Returns platform metadata and a map of available API endpoints.",
-    response_model = None,
-    tags        = ["Meta"],
+    summary="Service info",
+    description="Returns platform metadata and a map of available API endpoints.",
+    response_model=None,
+    tags=["Meta"],
 )
 async def root(request: Request) -> JSONResponse:
     """
@@ -316,27 +316,27 @@ async def root(request: Request) -> JSONResponse:
                 key = f"{method} {path}"
                 endpoints[key] = getattr(route, "summary", path)
 
-    chain_status     = None
+    chain_status = None
     predictor_status = None
     if hasattr(request.app.state, "chain") and request.app.state.chain is not None:
         chain_status = request.app.state.chain.status()
     if hasattr(request.app.state, "predictor") and request.app.state.predictor is not None:
         predictor_status = {
-            "features":  len(request.app.state.predictor.feature_cols),
+            "features": len(request.app.state.predictor.feature_cols),
             "threshold": round(request.app.state.predictor.threshold, 4),
             "store_size": request.app.state.predictor.store_size(),
         }
 
     return JSONResponse({
-        "service":     "FinSight AI Platform",
-        "version":     app.version,
+        "service": "FinSight AI Platform",
+        "version": app.version,
         "environment": settings.env,
-        "started_at":  getattr(request.app.state, "started_at", None),
+        "started_at": getattr(request.app.state, "started_at", None),
         "components": {
-            "rag_chain":       chain_status,
+            "rag_chain": chain_status,
             "fraud_predictor": predictor_status,
         },
         "missing_routers": _missing_routers or None,
-        "endpoints":       endpoints,
-        "docs":            "/docs" if settings.debug else None,
+        "endpoints": endpoints,
+        "docs": "/docs" if settings.debug else None,
     })

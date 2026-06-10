@@ -22,13 +22,12 @@ Usage
 import json
 import uuid
 from collections import OrderedDict
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import joblib
-import numpy as np
 import pandas as pd
 
 # ── Artifact paths ─────────────────────────────────────────────────────────────
@@ -54,7 +53,7 @@ RISK_THRESHOLDS = [
 # At ~1 KB per result, 100k entries ≈ 100 MB — a safe ceiling for a single pod.
 # When the cap is hit, the oldest 10% of entries are evicted (FIFO order).
 MAX_STORE_SIZE = 100_000
-EVICT_COUNT    = MAX_STORE_SIZE // 10
+EVICT_COUNT = MAX_STORE_SIZE // 10
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -77,22 +76,22 @@ class ScoreResult:
                               Stored so the SHAP explainer can be called later
                               without re-sending the transaction payload.
     """
-    transaction_id:    str
+    transaction_id: str
     fraud_probability: float
-    risk_level:        str
-    is_fraud:          bool
-    scored_at:         str
-    features:          dict
+    risk_level: str
+    is_fraud: bool
+    scored_at: str
+    features: dict
 
     def to_dict(self) -> dict:
         """JSON-serialisable representation (drops the features dict by default
         to keep API responses lean — include explicitly when needed)."""
         return {
-            "transaction_id":    self.transaction_id,
+            "transaction_id": self.transaction_id,
             "fraud_probability": round(self.fraud_probability, 4),
-            "risk_level":        self.risk_level,
-            "is_fraud":          self.is_fraud,
-            "scored_at":         self.scored_at,
+            "risk_level": self.risk_level,
+            "is_fraud": self.is_fraud,
+            "scored_at": self.scored_at,
         }
 
 
@@ -114,13 +113,13 @@ class FraudPredictor:
 
         # Loading XGBoost + SHAP explainer takes ~1–2 s — acceptable at startup,
         # unacceptable if done per request.
-        self.model     = joblib.load(artifacts_dir / "fraud_model.joblib")
+        self.model = joblib.load(artifacts_dir / "fraud_model.joblib")
         self.explainer = joblib.load(artifacts_dir / "shap_explainer.joblib")
 
         meta = json.loads((artifacts_dir / "feature_cols.json").read_text())
-        self.feature_cols      = meta["feature_cols"]
-        self.threshold         = meta["best_threshold"]       # F1-optimal from training
-        self.category_mapping  = meta["merchant_category_mapping"]  # str → int
+        self.feature_cols = meta["feature_cols"]
+        self.threshold = meta["best_threshold"]       # F1-optimal from training
+        self.category_mapping = meta["merchant_category_mapping"]  # str → int
 
         # OrderedDict preserves insertion order, enabling FIFO eviction
         self._store: OrderedDict[str, ScoreResult] = OrderedDict()
@@ -153,20 +152,20 @@ class FraudPredictor:
             get_transaction(). Calling score() twice with the same id
             overwrites the previous result.
         """
-        txn_id  = str(transaction.get("transaction_id", uuid.uuid4()))
-        row_df  = self._encode([transaction])
+        txn_id = str(transaction.get("transaction_id", uuid.uuid4()))
+        row_df = self._encode([transaction])
 
-        proba      = float(self.model.predict_proba(row_df)[0, 1])
+        proba = float(self.model.predict_proba(row_df)[0, 1])
         risk_level = self._to_risk_level(proba)
-        is_fraud   = proba >= self.threshold
+        is_fraud = proba >= self.threshold
 
         result = ScoreResult(
-            transaction_id    = txn_id,
-            fraud_probability = proba,
-            risk_level        = risk_level,
-            is_fraud          = is_fraud,
-            scored_at         = datetime.now(timezone.utc).isoformat(),
-            features          = row_df.iloc[0].to_dict(),
+            transaction_id=txn_id,
+            fraud_probability=proba,
+            risk_level=risk_level,
+            is_fraud=is_fraud,
+            scored_at=datetime.now(timezone.utc).isoformat(),
+            features=row_df.iloc[0].to_dict(),
         )
         self._store_result(txn_id, result)
         return result
@@ -207,12 +206,12 @@ class FraudPredictor:
         for i, (txn_id, proba) in enumerate(zip(txn_ids, probas)):
             proba = float(proba)
             result = ScoreResult(
-                transaction_id    = txn_id,
-                fraud_probability = proba,
-                risk_level        = self._to_risk_level(proba),
-                is_fraud          = proba >= self.threshold,
-                scored_at         = scored_at,
-                features          = batch_df.iloc[i].to_dict(),
+                transaction_id=txn_id,
+                fraud_probability=proba,
+                risk_level=self._to_risk_level(proba),
+                is_fraud=proba >= self.threshold,
+                scored_at=scored_at,
+                features=batch_df.iloc[i].to_dict(),
             )
             self._store_result(txn_id, result)
             results.append(result)
@@ -327,17 +326,17 @@ if __name__ == "__main__":
 
     # ── Single transaction ────────────────────────────────────────────────────
     normal = {
-        "transaction_id":    "txn-001",
-        "amount":            38.50,
-        "amount_log":        3.66,
-        "amount_x_risk":     1.93,
-        "amount_sum_1h":     38.50,
-        "txn_count_1h":      1,
-        "hour_of_day":       11,
-        "day_of_week":       1,
-        "is_night":          0,
-        "is_weekend":        0,
-        "account_age_bucket":2,
+        "transaction_id": "txn-001",
+        "amount": 38.50,
+        "amount_log": 3.66,
+        "amount_x_risk": 1.93,
+        "amount_sum_1h": 38.50,
+        "txn_count_1h": 1,
+        "hour_of_day": 11,
+        "day_of_week": 1,
+        "is_night": 0,
+        "is_weekend": 0,
+        "account_age_bucket": 2,
         "merchant_category": "grocery",
     }
     r = predictor.score(normal)
@@ -350,17 +349,17 @@ if __name__ == "__main__":
     # ── Batch scoring ─────────────────────────────────────────────────────────
     batch = [
         {
-            "transaction_id":    f"txn-{i:03d}",
-            "amount":            round(200 * (i + 1), 2),
-            "amount_log":        round(__import__("math").log1p(200 * (i + 1)), 4),
-            "amount_x_risk":     round(200 * (i + 1) * (0.05 if i % 2 == 0 else 0.90), 2),
-            "amount_sum_1h":     round(200 * (i + 1) * 3, 2),
-            "txn_count_1h":      i + 1,
-            "hour_of_day":       2 if i % 3 == 0 else 14,
-            "day_of_week":       6 if i % 4 == 0 else 2,
-            "is_night":          1 if i % 3 == 0 else 0,
-            "is_weekend":        1 if i % 4 == 0 else 0,
-            "account_age_bucket":0 if i < 2 else 2,
+            "transaction_id": f"txn-{i:03d}",
+            "amount": round(200 * (i + 1), 2),
+            "amount_log": round(__import__("math").log1p(200 * (i + 1)), 4),
+            "amount_x_risk": round(200 * (i + 1) * (0.05 if i % 2 == 0 else 0.90), 2),
+            "amount_sum_1h": round(200 * (i + 1) * 3, 2),
+            "txn_count_1h": i + 1,
+            "hour_of_day": 2 if i % 3 == 0 else 14,
+            "day_of_week": 6 if i % 4 == 0 else 2,
+            "is_night": 1 if i % 3 == 0 else 0,
+            "is_weekend": 1 if i % 4 == 0 else 0,
+            "account_age_bucket": 0 if i < 2 else 2,
             "merchant_category": "wire_transfer" if i % 3 == 0 else "retail",
         }
         for i in range(6)
@@ -368,6 +367,11 @@ if __name__ == "__main__":
     results = predictor.batch_score(batch)
     print(f"\n[batch]  {len(results)} transactions scored")
     for r in results:
-        print(f"  {r.transaction_id}  p={r.fraud_probability:.4f}  {r.risk_level:<8}  fraud={r.is_fraud}")
+        print(
+            f"  {
+                r.transaction_id}  p={
+                r.fraud_probability:.4f}  {
+                r.risk_level:<8}  fraud={
+                    r.is_fraud}")
 
     print(f"\n[store]  size={predictor.store_size()}  summary={predictor.risk_summary()}")

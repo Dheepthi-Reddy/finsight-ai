@@ -110,21 +110,21 @@ class QueryRequest(BaseModel):
     """
     question: str = Field(
         ...,
-        min_length  = 5,
-        max_length  = 2000,
-        description = "Natural-language compliance question.",
-        examples    = ["What are JPMorgan's AML obligations under the Bank Secrecy Act?"],
+        min_length=5,
+        max_length=2000,
+        description="Natural-language compliance question.",
+        examples=["What are JPMorgan's AML obligations under the Bank Secrecy Act?"],
     )
     ticker: str | None = Field(
-        default     = None,
-        description = "Restrict retrieval to this company's filings (e.g. 'JPM').",
-        examples    = ["JPM"],
+        default=None,
+        description="Restrict retrieval to this company's filings (e.g. 'JPM').",
+        examples=["JPM"],
     )
     top_k: int = Field(
-        default     = 5,
-        ge          = 1,
-        le          = 15,
-        description = "Number of document chunks to retrieve (1–15). Default 5.",
+        default=5,
+        ge=1,
+        le=15,
+        description="Number of document chunks to retrieve (1–15). Default 5.",
     )
 
     @field_validator("ticker")
@@ -136,8 +136,8 @@ class QueryRequest(BaseModel):
     model_config = {"json_schema_extra": {
         "example": {
             "question": "What AML controls does JPMorgan maintain under the Bank Secrecy Act?",
-            "ticker":   "JPM",
-            "top_k":    5,
+            "ticker": "JPM",
+            "top_k": 5,
         }
     }}
 
@@ -155,22 +155,23 @@ class ChunkSummary(BaseModel):
     Callers that need the raw text can use the source label to look up
     the filing in the ingested corpus.
     """
-    ticker:      str   = Field(description="Company ticker, e.g. 'JPM'.")
-    filing_type: str   = Field(description="SEC filing type: '10-K', '10-Q', or '8-K'.")
-    score:       float = Field(description="Cosine similarity score (0–1). Higher = more relevant.")
-    chunk_index: int   = Field(description="0-based position of this chunk within its source document.")
-    chunk_count: int   = Field(description="Total chunks in the source document.")
-    preview:     str   = Field(description="First 120 characters of the chunk text.")
+    ticker: str = Field(description="Company ticker, e.g. 'JPM'.")
+    filing_type: str = Field(description="SEC filing type: '10-K', '10-Q', or '8-K'.")
+    score: float = Field(description="Cosine similarity score (0–1). Higher = more relevant.")
+    chunk_index: int = Field(
+        description="0-based position of this chunk within its source document.")
+    chunk_count: int = Field(description="Total chunks in the source document.")
+    preview: str = Field(description="First 120 characters of the chunk text.")
 
     @classmethod
     def from_chunk(cls, chunk: dict[str, Any]) -> "ChunkSummary":
         return cls(
-            ticker      = chunk.get("ticker", ""),
-            filing_type = chunk.get("filing_type", ""),
-            score       = round(chunk.get("score", 0.0), 4),
-            chunk_index = chunk.get("chunk_index", 0),
-            chunk_count = chunk.get("chunk_count", 0),
-            preview     = chunk.get("text", "")[:120].strip(),
+            ticker=chunk.get("ticker", ""),
+            filing_type=chunk.get("filing_type", ""),
+            score=round(chunk.get("score", 0.0), 4),
+            chunk_index=chunk.get("chunk_index", 0),
+            chunk_count=chunk.get("chunk_count", 0),
+            preview=chunk.get("text", "")[:120].strip(),
         )
 
 
@@ -216,11 +217,11 @@ class EvaluationScores(BaseModel):
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "EvaluationScores":
         return cls(
-            bleu               = d.get("bleu"),
-            rouge_l            = d.get("rouge_l"),
-            faithfulness       = d.get("faithfulness"),
-            overall            = d.get("overall", "UNKNOWN"),
-            available_metrics  = d.get("available_metrics", []),
+            bleu=d.get("bleu"),
+            rouge_l=d.get("rouge_l"),
+            faithfulness=d.get("faithfulness"),
+            overall=d.get("overall", "UNKNOWN"),
+            available_metrics=d.get("available_metrics", []),
         )
 
 
@@ -228,8 +229,8 @@ class QueryResponse(BaseModel):
     """Compliance Q&A result including the generated answer and retrieval metadata."""
 
     question: str = Field(description="The original question, echoed back for traceability.")
-    answer:   str = Field(description="Claude's grounded response with inline source citations.")
-    sources:  list[str] = Field(
+    answer: str = Field(description="Claude's grounded response with inline source citations.")
+    sources: list[str] = Field(
         description=(
             "Unique source labels for the documents cited in the answer, "
             "in order of relevance. Format: 'TICKER / FILING_TYPE'."
@@ -262,10 +263,10 @@ class QueryResponse(BaseModel):
 
 @router.post(
     "",
-    response_model = QueryResponse,
-    status_code    = status.HTTP_200_OK,
-    summary        = "Ask a compliance question",
-    description    = (
+    response_model=QueryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Ask a compliance question",
+    description=(
         "Retrieves relevant SEC filing passages, sends them to Claude as grounded "
         "context, and returns a cited answer with automated quality scores. "
         "Optionally filter by company ticker to scope the search."
@@ -273,7 +274,7 @@ class QueryResponse(BaseModel):
 )
 async def compliance_query(
     request: Request,
-    body:    QueryRequest,
+    body: QueryRequest,
 ) -> QueryResponse:
     """
     Run the full RAG pipeline for a compliance question.
@@ -291,8 +292,8 @@ async def compliance_query(
     chain = _resolve_chain(request)
     if chain is None:
         raise HTTPException(
-            status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail      = (
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
                 "RAG chain is not available. The server may still be loading the "
                 "FAISS index and embedding model. Check GET /health/ready."
             ),
@@ -301,24 +302,24 @@ async def compliance_query(
     # ── Run the pipeline ───────────────────────────────────────────────────────
     try:
         result = chain.query(
-            question = body.question,
-            top_k    = body.top_k,
-            ticker   = body.ticker,
+            question=body.question,
+            top_k=body.top_k,
+            ticker=body.ticker,
         )
     except Exception as exc:
         raise HTTPException(
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail      = f"RAG pipeline failed: {exc}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"RAG pipeline failed: {exc}",
         ) from exc
 
     # ── Assemble response ──────────────────────────────────────────────────────
     return QueryResponse(
-        question         = result.question,
-        answer           = result.answer,
-        sources          = result.sources,
-        chunks_retrieved = len(result.chunks),
-        top_chunks       = [ChunkSummary.from_chunk(c) for c in result.chunks],
-        scores           = EvaluationScores.from_dict(result.scores),
-        ticker_filter    = result.ticker_filter,
-        is_stub          = result.is_stub,
+        question=result.question,
+        answer=result.answer,
+        sources=result.sources,
+        chunks_retrieved=len(result.chunks),
+        top_chunks=[ChunkSummary.from_chunk(c) for c in result.chunks],
+        scores=EvaluationScores.from_dict(result.scores),
+        ticker_filter=result.ticker_filter,
+        is_stub=result.is_stub,
     )

@@ -36,7 +36,7 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 # ── Paths ─────────────────────────────────────────────────────────────────────
 FEATURES_PATH = "data/features.parquet"
 ARTIFACTS_DIR = Path("fraud_model/artifacts")
-MODEL_PATH     = ARTIFACTS_DIR / "fraud_model.joblib"
+MODEL_PATH = ARTIFACTS_DIR / "fraud_model.joblib"
 EXPLAINER_PATH = ARTIFACTS_DIR / "shap_explainer.joblib"
 FEATURE_COLS_PATH = ARTIFACTS_DIR / "feature_cols.json"
 
@@ -45,21 +45,21 @@ MLFLOW_URI = os.getenv("MLFLOW_URI", "http://localhost:5000")
 EXPERIMENT_NAME = "finsight-fraud-detection"
 
 # ── Hyperparameter search ─────────────────────────────────────────────────────
-N_TRIALS   = 50
+N_TRIALS = 50
 RANDOM_STATE = 42
 
 # Time-based split ratios — last TEST_SIZE fraction is held out as the test set.
 # Using chronological order (not random) mimics production deployment: the model
 # is always predicting on transactions it has never seen before.
 TEST_SIZE = 0.20    # last 20% of sorted transactions
-VAL_SIZE  = 0.20    # 20% of the remaining train data for Optuna validation
+VAL_SIZE = 0.20    # 20% of the remaining train data for Optuna validation
 
 # SHAP is O(n * trees) — sampling the test set keeps analysis under a minute.
 SHAP_SAMPLE = 10_000
 
 # Target thresholds for a deployment-ready model
 TARGET_AUC = 0.95
-TARGET_F1  = 0.85
+TARGET_F1 = 0.85
 
 # ── Feature columns ───────────────────────────────────────────────────────────
 # Excluded columns and reasons:
@@ -116,17 +116,22 @@ def load_and_split(path: str) -> tuple:
 
     # Time-based split: last 20% → test, remaining 80% → train+val
     n = len(df)
-    test_start  = int(n * (1 - TEST_SIZE))
-    val_start   = int(test_start * (1 - VAL_SIZE))
+    test_start = int(n * (1 - TEST_SIZE))
+    val_start = int(test_start * (1 - VAL_SIZE))
 
-    X_train_val, y_train_val = X.iloc[:test_start],  y.iloc[:test_start]
-    X_test,      y_test      = X.iloc[test_start:],  y.iloc[test_start:]
-    X_train, y_train         = X.iloc[:val_start],   y.iloc[:val_start]
-    X_val,   y_val           = X.iloc[val_start:test_start], y.iloc[val_start:test_start]
+    X_train_val, y_train_val = X.iloc[:test_start], y.iloc[:test_start]
+    X_test, y_test = X.iloc[test_start:], y.iloc[test_start:]
+    X_train, y_train = X.iloc[:val_start], y.iloc[:val_start]
+    X_val, y_val = X.iloc[val_start:test_start], y.iloc[val_start:test_start]
 
     print(f"  Train: {len(X_train):,}  Val: {len(X_val):,}  Test: {len(X_test):,}")
-    print(f"  Overall fraud rate: {y.mean()*100:.2f}%")
-    return X_train, X_val, X_test, y_train, y_val, y_test, X_train_val, y_train_val, category_mapping
+    print(f"  Overall fraud rate: {y.mean() * 100:.2f}%")
+    return (
+        X_train, X_val, X_test,
+        y_train, y_val, y_test,
+        X_train_val, y_train_val,
+        category_mapping,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -140,6 +145,7 @@ class _PruningCallback(xgb.callback.TrainingCallback):
     Extends XGBoost 2.x's TrainingCallback — the only stable pruning API
     that doesn't require the separate optuna-integration package.
     """
+
     def __init__(self, trial: optuna.Trial) -> None:
         self.trial = trial
 
@@ -167,32 +173,32 @@ def make_objective(X_tr, y_tr, X_val, y_val, scale_pos_weight: float):
     def objective(trial: optuna.Trial) -> float:
         params = {
             # Tree structure
-            "n_estimators":     trial.suggest_int("n_estimators", 300, 1_000),
-            "max_depth":        trial.suggest_int("max_depth", 3, 9),
+            "n_estimators": trial.suggest_int("n_estimators", 300, 1_000),
+            "max_depth": trial.suggest_int("max_depth", 3, 9),
             "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
 
             # Learning dynamics
-            "learning_rate":    trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
-            "gamma":            trial.suggest_float("gamma", 0.0, 5.0),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+            "gamma": trial.suggest_float("gamma", 0.0, 5.0),
 
             # Stochastic regularisation — reduces overfitting on the minority class
-            "subsample":           trial.suggest_float("subsample", 0.6, 1.0),
-            "colsample_bytree":    trial.suggest_float("colsample_bytree", 0.6, 1.0),
-            "colsample_bylevel":   trial.suggest_float("colsample_bylevel", 0.6, 1.0),
+            "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
+            "colsample_bylevel": trial.suggest_float("colsample_bylevel", 0.6, 1.0),
 
             # L1 / L2 weight regularisation
-            "reg_alpha":  trial.suggest_float("reg_alpha",  1e-8, 10.0, log=True),
+            "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
             "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
 
             # Fixed settings
-            "eval_metric":        "auc",
+            "eval_metric": "auc",
             "early_stopping_rounds": 50,   # abort if val-AUC doesn't improve for 50 rounds
-            "scale_pos_weight":   scale_pos_weight,
-            "objective":          "binary:logistic",
-            "tree_method":        "hist",  # histogram algorithm — much faster than exact on 400k rows
-            "random_state":       RANDOM_STATE,
-            "n_jobs":             -1,
-            "verbosity":          0,
+            "scale_pos_weight": scale_pos_weight,
+            "objective": "binary:logistic",
+            "tree_method": "hist",  # histogram algorithm — much faster than exact on 400k rows
+            "random_state": RANDOM_STATE,
+            "n_jobs": -1,
+            "verbosity": 0,
         }
 
         model = xgb.XGBClassifier(**params)
@@ -241,7 +247,7 @@ def run_search(X_train, y_train, X_val, y_val, scale_pos_weight: float):
     )
 
     completed = len([t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE])
-    pruned    = len([t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED])
+    pruned = len([t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED])
     print(f"  Completed: {completed}  Pruned: {pruned}")
     print(f"  Best val AUC: {study.best_value:.4f}  (trial #{study.best_trial.number})")
     return study
@@ -267,14 +273,14 @@ def train_final_model(
     print("\nTraining final model on train+val...")
     params = {
         **best_params,
-        "n_estimators":    best_iteration,
+        "n_estimators": best_iteration,
         "scale_pos_weight": scale_pos_weight,
-        "objective":       "binary:logistic",
-        "eval_metric":     "auc",
-        "tree_method":     "hist",
-        "random_state":    RANDOM_STATE,
-        "n_jobs":          -1,
-        "verbosity":       0,
+        "objective": "binary:logistic",
+        "eval_metric": "auc",
+        "tree_method": "hist",
+        "random_state": RANDOM_STATE,
+        "n_jobs": -1,
+        "verbosity": 0,
     }
     # Remove search-only keys that XGBClassifier doesn't accept
     for key in ("early_stopping_rounds",):
@@ -308,29 +314,29 @@ def evaluate(model: xgb.XGBClassifier, X_test, y_test) -> dict:
     y_pred = (y_proba >= best_threshold).astype(int)
 
     auc = roc_auc_score(y_test, y_proba)
-    f1  = f1_score(y_test, y_pred)
-    cm  = confusion_matrix(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
 
-    print(f"\n── Test-set evaluation ──────────────────────────────────")
+    print("\n── Test-set evaluation ──────────────────────────────────")
     print(f"  ROC-AUC           : {auc:.4f}  (target ≥ {TARGET_AUC})")
     print(f"  F1 @ t={best_threshold:.3f}  : {f1:.4f}  (target ≥ {TARGET_F1})")
     print(f"  AUC {'✓' if auc >= TARGET_AUC else '✗'}  F1 {'✓' if f1 >= TARGET_F1 else '✗'}")
-    print(f"\nConfusion matrix (rows=actual, cols=predicted):")
-    print(f"  TN={cm[0,0]:>6,}  FP={cm[0,1]:>5,}")
-    print(f"  FN={cm[1,0]:>6,}  TP={cm[1,1]:>5,}")
-    print(f"\nClassification report:")
+    print("\nConfusion matrix (rows=actual, cols=predicted):")
+    print(f"  TN={cm[0, 0]:>6,}  FP={cm[0, 1]:>5,}")
+    print(f"  FN={cm[1, 0]:>6,}  TP={cm[1, 1]:>5,}")
+    print("\nClassification report:")
     print(classification_report(y_test, y_pred, target_names=["legit", "fraud"]))
 
     return {
-        "test_roc_auc":          auc,
-        "test_f1":               f1,
-        "test_threshold":        best_threshold,
-        "test_tn":               int(cm[0, 0]),
-        "test_fp":               int(cm[0, 1]),
-        "test_fn":               int(cm[1, 0]),
-        "test_tp":               int(cm[1, 1]),
-        "test_precision_fraud":  float(cm[1, 1] / (cm[0, 1] + cm[1, 1] + 1e-8)),
-        "test_recall_fraud":     float(cm[1, 1] / (cm[1, 0] + cm[1, 1] + 1e-8)),
+        "test_roc_auc": auc,
+        "test_f1": f1,
+        "test_threshold": best_threshold,
+        "test_tn": int(cm[0, 0]),
+        "test_fp": int(cm[0, 1]),
+        "test_fn": int(cm[1, 0]),
+        "test_tp": int(cm[1, 1]),
+        "test_precision_fraud": float(cm[1, 1] / (cm[0, 1] + cm[1, 1] + 1e-8)),
+        "test_recall_fraud": float(cm[1, 1] / (cm[1, 0] + cm[1, 1] + 1e-8)),
     }
 
 
@@ -407,8 +413,9 @@ def main() -> None:
             if trial.value is not None:
                 mlflow.log_metric("optuna_trial_auc", trial.value, step=trial.number)
 
-        best_params     = study.best_params
-        best_iteration  = study.best_trial.user_attrs.get("best_iteration", best_params["n_estimators"])
+        best_params = study.best_params
+        best_iteration = study.best_trial.user_attrs.get(
+            "best_iteration", best_params["n_estimators"])
 
         mlflow.log_params({f"best_{k}": v for k, v in best_params.items()})
         mlflow.log_metric("best_val_auc", study.best_value)

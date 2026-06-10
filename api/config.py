@@ -102,14 +102,14 @@ class Settings(BaseSettings):
         # In Docker/production, the file typically won't exist and all values
         # come from real environment variables — that's fine; pydantic-settings
         # only uses the file as a fallback layer.
-        env_file          = ".env",
-        env_file_encoding = "utf-8",
+        env_file=".env",
+        env_file_encoding="utf-8",
         # Case-insensitive so AWS_REGION, aws_region, and Aws_Region all bind
         # to the same field. Avoids confusion across team members' shell configs.
-        case_sensitive    = False,
+        case_sensitive=False,
         # Raise a ValidationError for any extra variables in the env file
         # rather than silently ignoring them — catches typos in variable names.
-        extra             = "ignore",
+        extra="ignore",
     )
 
     # ── Application environment ───────────────────────────────────────────────
@@ -273,14 +273,14 @@ class Settings(BaseSettings):
         written to stdout / log aggregators without credential exposure.
         """
         return {
-            "env":           self.env,
-            "aws_region":    self.aws_region,
-            "embed_mode":    self.embed_mode,
-            "mlflow_uri":    self.mlflow_uri,
+            "env": self.env,
+            "aws_region": self.aws_region,
+            "embed_mode": self.embed_mode,
+            "mlflow_uri": self.mlflow_uri,
             "pinecone_index": self.pinecone_index,
-            "has_aws_keys":  self.aws_access_key_id is not None,
-            "has_pinecone":  self.pinecone_api_key is not None,
-            "debug":         self.debug,
+            "has_aws_keys": self.aws_access_key_id is not None,
+            "has_pinecone": self.pinecone_api_key is not None,
+            "debug": self.debug,
         }
 
 

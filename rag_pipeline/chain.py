@@ -86,7 +86,7 @@ Usage
 from __future__ import annotations
 
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from rag_pipeline.generation.bedrock_client import BedrockClient, InvokeResponse
@@ -144,35 +144,35 @@ class QueryResult:
     context      : str           The full context string passed to Claude.
                                  Useful for debugging retrieval quality.
     """
-    question:      str
-    answer:        str
-    sources:       list[str]
-    chunks:        list[dict]
-    scores:        dict
+    question: str
+    answer: str
+    sources: list[str]
+    chunks: list[dict]
+    scores: dict
     ticker_filter: str | None = None
-    is_stub:       bool       = False
-    context:       str        = ""
+    is_stub: bool = False
+    context: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serialisable representation. Excludes raw context to keep payloads lean."""
         return {
-            "question":      self.question,
-            "answer":        self.answer,
-            "sources":       self.sources,
-            "chunks":        [
+            "question": self.question,
+            "answer": self.answer,
+            "sources": self.sources,
+            "chunks": [
                 {
-                    "ticker":      c["ticker"],
+                    "ticker": c["ticker"],
                     "filing_type": c["filing_type"],
-                    "score":       c["score"],
+                    "score": c["score"],
                     "chunk_index": c["chunk_index"],
                     "chunk_count": c["chunk_count"],
-                    "preview":     c["text"][:SOURCE_PREVIEW_LEN],
+                    "preview": c["text"][:SOURCE_PREVIEW_LEN],
                 }
                 for c in self.chunks
             ],
-            "scores":        self.scores,
+            "scores": self.scores,
             "ticker_filter": self.ticker_filter,
-            "is_stub":       self.is_stub,
+            "is_stub": self.is_stub,
         }
 
     def __repr__(self) -> str:
@@ -201,10 +201,10 @@ class FinSightChain:
 
     def __init__(
         self,
-        embedder:      FAISSEmbedder | None = None,
-        bedrock:       BedrockClient | None = None,
-        min_score:     float = MIN_SIMILARITY_SCORE,
-        max_chunks:    int   = MAX_CHUNKS,
+        embedder: FAISSEmbedder | None = None,
+        bedrock: BedrockClient | None = None,
+        min_score: float = MIN_SIMILARITY_SCORE,
+        max_chunks: int = MAX_CHUNKS,
     ) -> None:
         """
         Parameters
@@ -224,7 +224,7 @@ class FinSightChain:
             Hard upper bound on chunks passed to the model, applied after
             min_score filtering and optional ticker scoping.
         """
-        self.min_score  = min_score
+        self.min_score = min_score
         self.max_chunks = max_chunks
 
         # The embedder loads ~400 MB of model weights on first instantiation.
@@ -247,8 +247,8 @@ class FinSightChain:
     def query(
         self,
         question: str,
-        top_k:    int         = 5,
-        ticker:   str | None  = None,
+        top_k: int = 5,
+        ticker: str | None = None,
     ) -> QueryResult:
         """
         Run the full RAG pipeline for a single compliance question.
@@ -291,7 +291,7 @@ class FinSightChain:
         # Fetch 3× the requested top_k to create a buffer: some candidates
         # will be pruned by min_score or the ticker filter. Fetching more
         # upfront is much cheaper than a second FAISS round-trip.
-        fetch_k   = min(top_k * 3, self.embedder.vector_count or 1)
+        fetch_k = min(top_k * 3, self.embedder.vector_count or 1)
         raw_chunks = self.embedder.query(question, top_k=fetch_k)
 
         # ── Step 2: Filter ───────────────────────────────────────────────────
@@ -313,8 +313,8 @@ class FinSightChain:
 
         # ── Step 5: Generate ─────────────────────────────────────────────────
         response: InvokeResponse = self.bedrock.invoke(
-            prompt        = user_message,
-            system_prompt = COMPLIANCE_SYSTEM_PROMPT,
+            prompt=user_message,
+            system_prompt=COMPLIANCE_SYSTEM_PROMPT,
         )
 
         # ── Step 6: Evaluate ─────────────────────────────────────────────────
@@ -323,23 +323,23 @@ class FinSightChain:
         # by adding shared tokens that aren't present in the answer.
         raw_context_text = " ".join(c["text"] for c in chunks)
         eval_result: EvaluationResult = evaluate_response(
-            answer   = response.text,
-            context  = raw_context_text,
-            question = question,
+            answer=response.text,
+            context=raw_context_text,
+            question=question,
         )
 
         # ── Step 7: Assemble result ───────────────────────────────────────────
         sources = _unique_sources(chunks)
 
         return QueryResult(
-            question      = question,
-            answer        = response.text,
-            sources       = sources,
-            chunks        = chunks,
-            scores        = eval_result.to_dict(),
-            ticker_filter = ticker,
-            is_stub       = response.is_stub,
-            context       = context,
+            question=question,
+            answer=response.text,
+            sources=sources,
+            chunks=chunks,
+            scores=eval_result.to_dict(),
+            ticker_filter=ticker,
+            is_stub=response.is_stub,
+            context=context,
         )
 
     # ── Batch interface ───────────────────────────────────────────────────────
@@ -347,8 +347,8 @@ class FinSightChain:
     def batch_query(
         self,
         questions: list[str],
-        top_k:     int        = 5,
-        ticker:    str | None = None,
+        top_k: int = 5,
+        ticker: str | None = None,
     ) -> list[QueryResult]:
         """
         Run query() for each question sequentially and return all results.
@@ -379,20 +379,20 @@ class FinSightChain:
         zero vectors in the index will always return empty results.
         """
         return {
-            "vector_count":  self.embedder.vector_count,
-            "index_ready":   self.embedder.vector_count > 0,
-            "bedrock_stub":  self.bedrock._stub_mode,
-            "min_score":     self.min_score,
-            "max_chunks":    self.max_chunks,
+            "vector_count": self.embedder.vector_count,
+            "index_ready": self.embedder.vector_count > 0,
+            "bedrock_stub": self.bedrock._stub_mode,
+            "min_score": self.min_score,
+            "max_chunks": self.max_chunks,
         }
 
     # ── Private helpers ───────────────────────────────────────────────────────
 
     def _filter_chunks(
         self,
-        chunks:  list[dict],
-        ticker:  str | None,
-        top_k:   int,
+        chunks: list[dict],
+        ticker: str | None,
+        top_k: int,
     ) -> list[dict]:
         """
         Apply ticker filter, minimum similarity threshold, and top_k cap.
@@ -449,7 +449,7 @@ class FinSightChain:
     def _no_results_response(
         self,
         question: str,
-        ticker:   str | None,
+        ticker: str | None,
     ) -> QueryResult:
         """
         Return a graceful QueryResult when retrieval yields no usable chunks.
@@ -480,15 +480,15 @@ class FinSightChain:
             )
 
         return QueryResult(
-            question      = question,
-            answer        = f"No relevant context found. {reason}",
-            sources       = [],
-            chunks        = [],
-            scores        = {"bleu": None, "rouge_l": None, "faithfulness": None,
-                             "overall": "UNKNOWN", "available_metrics": []},
-            ticker_filter = ticker,
-            is_stub       = False,
-            context       = "",
+            question=question,
+            answer=f"No relevant context found. {reason}",
+            sources=[],
+            chunks=[],
+            scores={"bleu": None, "rouge_l": None, "faithfulness": None,
+                    "overall": "UNKNOWN", "available_metrics": []},
+            ticker_filter=ticker,
+            is_stub=False,
+            context="",
         )
 
 
@@ -524,7 +524,7 @@ if __name__ == "__main__":
 
     # ── Bootstrap the index with stub filings (no SEC network access needed) ──
     print("Loading stub filings and building FAISS index...")
-    docs   = load_filings(force_stubs=True)
+    docs = load_filings(force_stubs=True)
     chunks = chunk_documents(docs)
 
     embedder = FAISSEmbedder()
@@ -538,8 +538,8 @@ if __name__ == "__main__":
     # ── Run queries ───────────────────────────────────────────────────────────
     queries = [
         ("What are the AML and BSA compliance obligations for financial institutions?", None),
-        ("How does JPMorgan manage suspicious activity report filings?",              "JPM"),
-        ("What capital requirements do banks face under Basel III?",                  None),
+        ("How does JPMorgan manage suspicious activity report filings?", "JPM"),
+        ("What capital requirements do banks face under Basel III?", None),
     ]
 
     for question, ticker in queries:

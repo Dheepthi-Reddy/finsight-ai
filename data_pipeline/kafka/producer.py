@@ -103,10 +103,12 @@ def stream(csv_path: str, rate: int) -> None:
     sent = 0
     errors = 0
     stream_start = time.perf_counter()
+    batch_start = stream_start
 
     try:
         for i, row in enumerate(df.itertuples(index=False), start=1):
-            batch_start = time.perf_counter() if (i % BATCH_SIZE == 1) else batch_start
+            if i % BATCH_SIZE == 1:
+                batch_start = time.perf_counter()
 
             msg = row._asdict()
 

@@ -89,7 +89,6 @@ Usage
 
 from __future__ import annotations
 
-import re
 import warnings
 from dataclasses import dataclass, field
 from typing import Any
@@ -140,9 +139,9 @@ def _ensure_nltk_data() -> None:
     if not _NLTK_AVAILABLE:
         return
     for resource, name in [
-        ("tokenizers/punkt",      "punkt"),
-        ("tokenizers/punkt_tab",  "punkt_tab"),
-        ("corpora/stopwords",     "stopwords"),
+        ("tokenizers/punkt", "punkt"),
+        ("tokenizers/punkt_tab", "punkt_tab"),
+        ("corpora/stopwords", "stopwords"),
     ]:
         try:
             nltk.data.find(resource)
@@ -155,8 +154,8 @@ def _ensure_nltk_data() -> None:
 # Deliberately conservative: a compliance assistant should be held to a high
 # groundedness bar to avoid hallucinated regulatory claims reaching analysts.
 THRESHOLDS = {
-    "bleu":         {"pass": 0.25, "warn": 0.10},
-    "rouge_l":      {"pass": 0.30, "warn": 0.15},
+    "bleu": {"pass": 0.25, "warn": 0.10},
+    "rouge_l": {"pass": 0.30, "warn": 0.15},
     "faithfulness": {"pass": 0.75, "warn": 0.55},
 }
 
@@ -181,18 +180,18 @@ class EvaluationResult:
       FAIL — any metric falls below its warn threshold
       UNKNOWN — no metrics could be computed (all libraries missing)
     """
-    bleu:              float | None
-    rouge_l:           float | None
-    faithfulness:      float | None
-    overall:           str                      # PASS / WARN / FAIL / UNKNOWN
+    bleu: float | None
+    rouge_l: float | None
+    faithfulness: float | None
+    overall: str                      # PASS / WARN / FAIL / UNKNOWN
     available_metrics: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "bleu":              round(self.bleu, 4) if self.bleu is not None else None,
-            "rouge_l":           round(self.rouge_l, 4) if self.rouge_l is not None else None,
-            "faithfulness":      round(self.faithfulness, 4) if self.faithfulness is not None else None,
-            "overall":           self.overall,
+            "bleu": round(self.bleu, 4) if self.bleu is not None else None,
+            "rouge_l": round(self.rouge_l, 4) if self.rouge_l is not None else None,
+            "faithfulness": round(self.faithfulness, 4) if self.faithfulness is not None else None,
+            "overall": self.overall,
             "available_metrics": self.available_metrics,
         }
 
@@ -242,7 +241,7 @@ def compute_bleu(answer: str, context: str) -> float | None:
     # word_tokenize lowercases and splits on punctuation cleanly.
     # sentence_bleu expects a list-of-references (each reference is a token list),
     # so we wrap the single context token list in an outer list.
-    reference  = [nltk.word_tokenize(context.lower())]
+    reference = [nltk.word_tokenize(context.lower())]
     hypothesis = nltk.word_tokenize(answer.lower())
 
     if not hypothesis:
@@ -251,7 +250,7 @@ def compute_bleu(answer: str, context: str) -> float | None:
     # Equal 4-gram weights: standard BLEU-4 configuration.
     # For very short answers (<4 tokens), higher n-gram orders are always 0;
     # smoothing prevents the overall score from collapsing.
-    weights  = (0.25, 0.25, 0.25, 0.25)
+    weights = (0.25, 0.25, 0.25, 0.25)
     smoother = SmoothingFunction().method1
 
     return float(sentence_bleu(reference, hypothesis, weights=weights,
@@ -375,8 +374,8 @@ def compute_faithfulness(answer: str, context: str) -> float | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def evaluate_response(
-    answer:   str,
-    context:  str,
+    answer: str,
+    context: str,
     question: str = "",
 ) -> EvaluationResult:
     """
@@ -449,8 +448,8 @@ def evaluate_response(
 
 
 def _compute_overall(
-    bleu:         float | None,
-    rouge_l:      float | None,
+    bleu: float | None,
+    rouge_l: float | None,
     faithfulness: float | None,
 ) -> str:
     """
@@ -462,8 +461,8 @@ def _compute_overall(
     single hallucinated regulatory claim can cause harm.
     """
     scores = {
-        "bleu":         bleu,
-        "rouge_l":      rouge_l,
+        "bleu": bleu,
+        "rouge_l": rouge_l,
         "faithfulness": faithfulness,
     }
 
@@ -514,9 +513,9 @@ def evaluate_batch(
     results = []
     for pair in pairs:
         results.append(evaluate_response(
-            answer   = pair["answer"],
-            context  = pair["context"],
-            question = pair.get("question", ""),
+            answer=pair["answer"],
+            context=pair["context"],
+            question=pair.get("question", ""),
         ))
     return results
 
@@ -535,20 +534,20 @@ def summarise_batch(results: list[EvaluationResult]) -> dict[str, Any]:
     def _mean(values: list[float]) -> float:
         return round(sum(values) / len(values), 4) if values else 0.0
 
-    bleu_scores         = [r.bleu        for r in results if r.bleu        is not None]
-    rouge_l_scores      = [r.rouge_l     for r in results if r.rouge_l     is not None]
+    bleu_scores = [r.bleu for r in results if r.bleu is not None]
+    rouge_l_scores = [r.rouge_l for r in results if r.rouge_l is not None]
     faithfulness_scores = [r.faithfulness for r in results if r.faithfulness is not None]
 
     verdicts = [r.overall for r in results]
     return {
-        "n":              len(results),
-        "mean_bleu":      _mean(bleu_scores),
-        "mean_rouge_l":   _mean(rouge_l_scores),
+        "n": len(results),
+        "mean_bleu": _mean(bleu_scores),
+        "mean_rouge_l": _mean(rouge_l_scores),
         "mean_faithfulness": _mean(faithfulness_scores),
         "overall_counts": {
-            "PASS":    verdicts.count("PASS"),
-            "WARN":    verdicts.count("WARN"),
-            "FAIL":    verdicts.count("FAIL"),
+            "PASS": verdicts.count("PASS"),
+            "WARN": verdicts.count("WARN"),
+            "FAIL": verdicts.count("FAIL"),
             "UNKNOWN": verdicts.count("UNKNOWN"),
         },
         "pass_rate": round(verdicts.count("PASS") / len(verdicts), 4),
@@ -597,9 +596,9 @@ if __name__ == "__main__":
     question = "What AML obligations does JPMorgan have under the Bank Secrecy Act?"
 
     test_cases = [
-        ("Grounded answer",         grounded_answer),
-        ("Partially hallucinated",  partial_answer),
-        ("Fully hallucinated",      hallucinated_answer),
+        ("Grounded answer", grounded_answer),
+        ("Partially hallucinated", partial_answer),
+        ("Fully hallucinated", hallucinated_answer),
     ]
 
     for label, answer in test_cases:
@@ -615,6 +614,6 @@ if __name__ == "__main__":
     ]
     all_results = evaluate_batch(pairs)
     summary = summarise_batch(all_results)
-    print(f"\n── Batch summary ──────────────────────────────────────────────")
+    print("\n── Batch summary ──────────────────────────────────────────────")
     for k, v in summary.items():
         print(f"  {k}: {v}")
