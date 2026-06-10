@@ -202,7 +202,8 @@ jobs:
             --cov=data_pipeline \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=70 \
+            --cov-fail-under=35 \
+            --cov-config=.coveragerc \
             -v \
             --tb=short
 

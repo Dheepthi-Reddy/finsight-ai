@@ -3,8 +3,13 @@ torch==2.9.1+cpu
 fastapi==0.110.0 # to build and serve API endpoints
 faiss-cpu # to store and search document embeddings
 langchain # framework that orchestrates as a a chain between retrieval and LLM
+langchain-text-splitters # RecursiveCharacterTextSplitter used by chunker.py
+langgraph # state-machine graph execution for agentic_chain.py
 boto3 # Amazon SDK to connect Claude via AWS
 anthropic
+nltk # tokenisation and stopwords for response_evaluator.py
+rouge-score # ROUGE-L metric for response_evaluator.py
+rank-bm25 # BM25 sparse retrieval for hybrid_retriever.py
 
 # -- Infrastructure --
 uvicorn # server to run FastAPI

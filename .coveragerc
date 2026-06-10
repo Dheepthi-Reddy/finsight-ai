@@ -1,0 +1,29 @@
+[run]
+omit =
+    # FastAPI app entrypoint — requires full server startup with live DB/config;
+    # covered by integration tests, not unit tests.
+    api/main.py
+    api/config.py
+
+    # RAG chain and agentic pipeline — require a populated FAISS index and live
+    # AWS Bedrock credentials. Unit-testable logic (chunker, evaluator, embedder)
+    # is covered via their own test classes.
+    rag_pipeline/chain.py
+    rag_pipeline/agentic_chain.py
+
+    # Hybrid retriever — requires sentence-transformers model download on first
+    # run; covered separately in integration tests.
+    rag_pipeline/retrieval/hybrid_retriever.py
+
+    # Test files themselves should not count toward coverage.
+    tests/*
+
+[report]
+exclude_lines =
+    # Standard pragma to exclude lines from coverage
+    pragma: no cover
+    # Abstract methods and type stubs
+    def __repr__
+    raise NotImplementedError
+    # CLI entrypoints (if __name__ == "__main__" blocks)
+    if __name__ == .__main__.:
