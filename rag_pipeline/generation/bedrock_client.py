@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any
 
@@ -293,6 +294,123 @@ class BedrockClient:
             output_tokens=output_tokens,
             stop_reason=stop_reason,
         )
+
+    # ── Public: invoke_batch ─────────────────────────────────────────────────
+
+    def invoke_batch(
+        self,
+        prompts:       list[str],
+        system_prompt: str = "",
+        max_tokens:    int = DEFAULT_MAX_TOKENS,
+        temperature:   float = DEFAULT_TEMPERATURE,
+        max_workers:   int = 5,
+    ) -> list[InvokeResponse]:
+        """
+        Send multiple prompts to Claude concurrently and return all responses.
+
+        Why batching reduces cost and latency
+        ----------------------------------------
+        Bedrock does not offer a native batch API for the Messages endpoint —
+        each prompt requires its own HTTP request. However, sending them
+        *concurrently* (rather than sequentially) dramatically reduces
+        wall-clock time:
+
+          Sequential (N prompts):    total_time ≈ N × avg_latency
+          Concurrent (N prompts):    total_time ≈ max_latency + scheduling overhead
+
+        For 5 prompts averaging 1.5s each:
+          Sequential: ~7.5s
+          Concurrent: ~1.7s  (4.4× faster)
+
+        Why this doesn't increase cost
+        --------------------------------
+        Bedrock charges per token regardless of whether requests are sequential
+        or concurrent — you pay for the tokens processed, not the wall-clock time.
+        Concurrency does not inflate the per-token price.
+
+        However, batching enables *prompt caching* across related requests: when
+        multiple prompts share the same system prompt prefix, Anthropic's prompt
+        caching (if enabled via cache_control headers) allows the KV cache for
+        the shared prefix to be reused across the concurrent requests — cutting
+        the effective input token cost by 90% for the cached portion.
+
+        Why max_workers=5
+        ------------------
+        Bedrock rate limits concurrent requests per account. The default
+        quota for claude-haiku and claude-sonnet in us-east-1 is typically
+        50 requests per minute at peak. max_workers=5 leaves headroom for
+        other concurrent API users (e.g. the main request path) without
+        triggering ThrottlingException. Tune this value based on your
+        account's service quota.
+
+        Error handling
+        ---------------
+        If any individual request fails (network error, ThrottlingException,
+        token limit exceeded), that position in the result list contains an
+        InvokeResponse with the error message as text and is_stub=True.
+        The other results are unaffected — failures are isolated per prompt.
+
+        Parameters
+        ----------
+        prompts       : list[str]   One or more user prompts to run in parallel.
+        system_prompt : str         Shared system prompt for all prompts.
+        max_tokens    : int         Per-response token ceiling.
+        temperature   : float       Sampling temperature for all prompts.
+        max_workers   : int         Maximum concurrent Bedrock requests.
+
+        Returns
+        -------
+        list[InvokeResponse]
+            One response per prompt, in the same order as the input list.
+            Never raises — failed individual requests appear as stub responses.
+        """
+        if not prompts:
+            return []
+
+        # In stub mode there are no actual HTTP calls; run sequentially to
+        # avoid spawning threads for no reason.
+        if self._stub_mode:
+            return [
+                self._stub_response(p, system_prompt, max_tokens, temperature)
+                for p in prompts
+            ]
+
+        # Use a ThreadPoolExecutor so concurrent invocations share the same
+        # boto3 session and connection pool. boto3 clients are thread-safe for
+        # reads; we never mutate client state inside the threads.
+        results: list[InvokeResponse | None] = [None] * len(prompts)
+
+        def _invoke_indexed(index: int, prompt: str) -> tuple[int, InvokeResponse]:
+            """Invoke a single prompt and return (index, response) for ordering."""
+            try:
+                response = self._live_invoke(prompt, system_prompt, max_tokens, temperature)
+                return index, response
+            except Exception as exc:
+                # Wrap the exception in a stub-style response so the caller
+                # always receives a complete list with no missing positions.
+                error_text = (
+                    f"[BATCH ERROR at index {index}] "
+                    f"{type(exc).__name__}: {exc}"
+                )
+                return index, InvokeResponse(
+                    text=error_text,
+                    model_id=self.model_id,
+                    input_tokens=0,
+                    output_tokens=0,
+                    is_stub=True,
+                    stop_reason="error",
+                )
+
+        with ThreadPoolExecutor(max_workers=min(max_workers, len(prompts))) as executor:
+            futures = {
+                executor.submit(_invoke_indexed, i, p): i
+                for i, p in enumerate(prompts)
+            }
+            for future in as_completed(futures):
+                idx, response = future.result()
+                results[idx] = response
+
+        return results  # type: ignore[return-value]  # all slots filled above
 
     # ── Private: live invocation ──────────────────────────────────────────────
 
