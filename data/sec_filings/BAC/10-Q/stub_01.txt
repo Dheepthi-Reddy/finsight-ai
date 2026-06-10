@@ -1,0 +1,70 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+
+FORM 10-Q
+QUARTERLY REPORT PURSUANT TO SECTION 13 OR 15(d)
+OF THE SECURITIES EXCHANGE ACT OF 1934
+
+For the quarterly period ended: Q2 2024
+
+BANK OF AMERICA CORPORATION (BAC)
+
+=====================================================================
+PART I — FINANCIAL INFORMATION
+=====================================================================
+
+ITEM 1. FINANCIAL STATEMENTS (UNAUDITED)
+
+The accompanying unaudited condensed consolidated financial statements
+have been prepared in accordance with generally accepted accounting
+principles (GAAP) and applicable SEC regulations for interim financial
+information.
+
+Net revenues for Q2 2024: $13B
+Provision for credit losses: $2B
+Net income: $5B
+
+ITEM 2. MANAGEMENT'S DISCUSSION AND ANALYSIS
+
+Regulatory Update
+During Q2 2024, the Company received no material regulatory orders or
+consent agreements. The Company continues to cooperate with ongoing
+examinations by the OCC, FDIC, and Federal Reserve. Capital ratios
+remained above all regulatory minimums and internal targets.
+
+AML and Sanctions Compliance
+Transaction monitoring enhancements deployed during the quarter reduced
+false-positive alert rates by 7%
+while maintaining detection coverage. The Company updated its OFAC
+screening lists to reflect new Treasury SDN designations. No SAR filing
+deficiencies were identified during the quarter.
+
+Fraud Metrics
+Fraud losses for Q2 2024 were $128M,
+representing 0.01%
+of total transaction volume. The Company's machine learning fraud models
+maintained precision above 90% and recall above 85% for card-not-present
+fraud detection.
+
+ITEM 3. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISK
+No material changes from the Annual Report on Form 10-K.
+
+ITEM 4. CONTROLS AND PROCEDURES
+Management evaluated the effectiveness of the Company's disclosure controls
+and procedures as of the end of Q2 2024. Based on that evaluation, the
+CEO and CFO concluded that the disclosure controls and procedures are
+effective in ensuring that information required to be disclosed is recorded,
+processed, summarized, and reported within required time periods.
+
+=====================================================================
+PART II — OTHER INFORMATION
+=====================================================================
+
+ITEM 1. LEGAL PROCEEDINGS
+The Company is party to various legal proceedings arising in the ordinary
+course of business. Management does not believe these proceedings will have
+a material adverse effect on the Company's financial condition.
+
+ITEM 1A. RISK FACTORS
+No material changes from the risk factors disclosed in the Annual Report
+on Form 10-K for the fiscal year ended December 31.

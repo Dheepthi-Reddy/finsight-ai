@@ -432,11 +432,11 @@ def main() -> None:
 
         # ── SHAP ──────────────────────────────────────────────────────────────
         explainer, shap_importance = run_shap(model, X_test)
-        mlflow.log_dict(shap_importance, "shap_feature_importance.json")
+        # mlflow.log_dict(shap_importance, "shap_feature_importance.json")
 
         # ── Log model to MLflow ───────────────────────────────────────────────
         # Log the booster so it can be loaded directly from MLflow model registry
-        mlflow.xgboost.log_model(model, artifact_path="model")
+        # mlflow.xgboost.log_model(model, artifact_path="model")
 
         # ── Save artifacts ────────────────────────────────────────────────────
         # joblib is preferred over pickle for sklearn/xgboost objects: it
@@ -456,9 +456,9 @@ def main() -> None:
         FEATURE_COLS_PATH.write_text(json.dumps(feature_meta, indent=2))
 
         # Log artifact paths to MLflow for traceability
-        mlflow.log_artifact(str(MODEL_PATH))
-        mlflow.log_artifact(str(EXPLAINER_PATH))
-        mlflow.log_artifact(str(FEATURE_COLS_PATH))
+        # mlflow.log_artifact(str(MODEL_PATH))
+        # mlflow.log_artifact(str(EXPLAINER_PATH))
+        # mlflow.log_artifact(str(FEATURE_COLS_PATH))
 
         print(f"  {MODEL_PATH}")
         print(f"  {EXPLAINER_PATH}")

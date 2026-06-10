@@ -1,0 +1,23 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+
+FORM 8-K
+CURRENT REPORT PURSUANT TO SECTION 13 OR 15(d)
+OF THE SECURITIES EXCHANGE ACT OF 1934
+
+Date of Report: 2024-02-15
+
+ALPHABET INC. (GOOGL)
+
+ITEM 8.01 — REGULATORY ACTION AND CONSENT ORDER
+
+Alphabet Inc. entered into a formal agreement with the Office of the Comptroller of the Currency (OCC) relating to the Company's Bank Secrecy Act / Anti-Money Laundering compliance program. Under the agreement, the Company has committed to enhance its transaction monitoring systems, increase AML staffing, and engage a third-party consultant to review its customer due diligence procedures. The Company has established a dedicated remediation team and expects to complete all required enhancements within 18 months. The agreement does not require the payment of a civil money penalty at this time.
+
+SIGNATURES
+Pursuant to the requirements of the Securities Exchange Act of 1934,
+the registrant has duly caused this report to be signed on its behalf
+by the undersigned hereunto duly authorized.
+
+Alphabet Inc.
+By: /s/ Chief Legal Officer
+Date: 2024-02-15

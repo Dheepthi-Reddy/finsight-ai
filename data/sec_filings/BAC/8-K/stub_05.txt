@@ -1,0 +1,23 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+
+FORM 8-K
+CURRENT REPORT PURSUANT TO SECTION 13 OR 15(d)
+OF THE SECURITIES EXCHANGE ACT OF 1934
+
+Date of Report: 2020-10-15
+
+BANK OF AMERICA CORPORATION (BAC)
+
+ITEM 8.01 — DATA BREACH NOTIFICATION
+
+Bank of America Corporation became aware of a data security incident in which an unauthorized third party accessed certain customer data. The Company immediately engaged outside counsel and a cybersecurity firm, notified affected customers, and made required notifications to state attorneys general and federal regulators. Affected data may include names, account numbers, and transaction history for approximately 99050 customers. The Company has enhanced its security controls and implemented additional monitoring. This incident is not expected to have a material adverse effect on the Company's financial condition.
+
+SIGNATURES
+Pursuant to the requirements of the Securities Exchange Act of 1934,
+the registrant has duly caused this report to be signed on its behalf
+by the undersigned hereunto duly authorized.
+
+Bank of America Corporation
+By: /s/ Chief Legal Officer
+Date: 2020-10-15

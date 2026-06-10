@@ -91,3 +91,4 @@ finsight-ai/
 - [x] Fraud endpoint created
 - [x] Query endpoint created
 - [x] Explain endpoint created
+- [x] GitHub Actions CI pipeline created

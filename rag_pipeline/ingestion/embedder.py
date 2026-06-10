@@ -40,6 +40,7 @@ Usage
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -83,8 +84,8 @@ class FAISSEmbedder:
         self.index_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"Loading embedding model '{model_name}'...")
-        # SentenceTransformer downloads the model weights on first use and
-        # caches them in ~/.cache/torch/sentence_transformers/
+        # Prevent segfault on Python 3.13 + Apple Silicon (MPS/OMP thread clash)
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
         self.model = SentenceTransformer(model_name)
 
         # metadata[i] holds the text and provenance for the vector at FAISS
@@ -124,10 +125,10 @@ class FAISSEmbedder:
         # Encode all texts and L2-normalise so inner product == cosine similarity.
         # normalize_embeddings=True applies the normalisation inside the model's
         # encode() call — faster than a separate faiss.normalize_L2() pass.
-        print(f"Embedding {len(texts):,} chunks (batch_size={ENCODE_BATCH_SIZE})...")
+        print(f"Embedding {len(texts):,} chunks (batch_size=1)...")
         vectors = self.model.encode(
             texts,
-            batch_size=ENCODE_BATCH_SIZE,
+            batch_size=1,
             normalize_embeddings=True,
             show_progress_bar=True,
             convert_to_numpy=True,
@@ -189,6 +190,7 @@ class FAISSEmbedder:
         # so the vector lives in the same normalised space as stored chunks.
         query_vec = self.model.encode(
             [text],
+            batch_size=1,
             normalize_embeddings=True,
             convert_to_numpy=True,
         ).astype(np.float32)

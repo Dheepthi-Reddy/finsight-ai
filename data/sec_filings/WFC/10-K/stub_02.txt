@@ -1,0 +1,127 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+
+FORM 10-K
+ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d)
+OF THE SECURITIES EXCHANGE ACT OF 1934
+
+For the fiscal year ended December 31, 2023
+Commission File Number: 001-23211
+
+WELLS FARGO & COMPANY
+(Exact name of registrant as it appears in its charter)
+
+=====================================================================
+PART I
+=====================================================================
+
+ITEM 1. BUSINESS
+
+Wells Fargo & Company ("WFC") is a global financial services company providing a
+diversified range of banking, investment management, and financial services
+to consumers, corporations, governments, and institutions worldwide. The
+Company operates through multiple business segments subject to regulation by
+federal and state banking authorities, the SEC, FINRA, and international
+regulatory bodies.
+
+ITEM 1A. RISK FACTORS
+
+Regulatory and Compliance Risk
+The Company is subject to extensive regulation and supervision by federal and
+state regulators. Changes in laws or regulations, or in their interpretation
+or enforcement, could adversely affect the Company's business. The Company's
+compliance programs are designed to comply with the Bank Secrecy Act (BSA),
+Anti-Money Laundering (AML) requirements, the USA PATRIOT Act, Office of
+Foreign Assets Control (OFAC) regulations, and Know Your Customer (KYC)
+obligations. Failure to maintain adequate AML controls could result in
+regulatory sanctions, fines, and reputational harm.
+
+The Company maintains an enterprise-wide AML compliance program that
+includes policies, procedures, transaction monitoring systems, suspicious
+activity report (SAR) filing processes, and ongoing employee training.
+The program is overseen by a designated Bank Secrecy Act Officer and
+reviewed annually by internal audit.
+
+Technology and Cybersecurity Risk
+The Company relies on complex information technology systems. Cybersecurity
+incidents, including unauthorized access, ransomware, and data breaches,
+could compromise customer data and disrupt operations. The Company maintains
+a cybersecurity framework aligned with the NIST Cybersecurity Framework and
+conducts annual penetration testing and tabletop exercises.
+
+Fraud Risk
+The Company faces fraud risk across all business lines, including account
+takeover, synthetic identity fraud, payment fraud, and insider fraud. The
+Company employs machine learning-based transaction monitoring, behavioral
+analytics, and multi-factor authentication to detect and prevent fraud.
+Real-time scoring of transactions allows the Company to block suspicious
+activity before settlement. Despite these controls, fraud losses remain a
+material risk factor.
+
+Credit Risk
+Credit risk arises from the potential that a borrower or counterparty will
+fail to perform on its contractual obligations. The Company manages credit
+risk through underwriting standards, credit concentration limits, collateral
+requirements, and portfolio diversification.
+
+Interest Rate Risk
+Changes in interest rates affect the Company's net interest margin and the
+fair value of its assets and liabilities. The Company uses interest rate
+derivatives, gap analysis, and economic value of equity modeling to manage
+this exposure.
+
+ITEM 1B. UNRESOLVED STAFF COMMENTS — None.
+
+=====================================================================
+PART II
+=====================================================================
+
+ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION
+AND RESULTS OF OPERATIONS
+
+Overview
+For the fiscal year ended December 31, 2023, Wells Fargo & Company reported net
+revenues of approximately $56.0B
+and net income attributable to common shareholders of approximately
+$11.0B. Return on equity was
+19.0%.
+
+Capital and Liquidity
+The Company maintains capital ratios in excess of regulatory minimums under
+Basel III requirements. Common Equity Tier 1 (CET1) capital ratio was
+15.0% as of December 31,
+2023, compared to the 4.5% minimum plus the 2.5% capital conservation
+buffer required by regulation. The Liquidity Coverage Ratio (LCR) and Net
+Stable Funding Ratio (NSFR) both exceeded 100% throughout the year.
+
+Anti-Money Laundering Program
+The Company filed 2475 Suspicious
+Activity Reports (SARs) with FinCEN during 2023. The Company's transaction
+monitoring system reviewed over 311 million
+transactions and escalated 41487
+alerts for analyst review. No material AML enforcement actions were taken
+against the Company during 2023.
+
+ITEM 7A. QUANTITATIVE AND QUALITATIVE DISCLOSURES ABOUT MARKET RISK
+Market risk is managed through value-at-risk (VaR) models, stress testing,
+and scenario analysis consistent with Basel Committee on Banking Supervision
+guidelines.
+
+ITEM 8. FINANCIAL STATEMENTS AND SUPPLEMENTARY DATA
+The Consolidated Financial Statements and Notes thereto are incorporated
+herein by reference from the Annual Report to Shareholders.
+
+=====================================================================
+PART III
+=====================================================================
+
+ITEM 10. DIRECTORS, EXECUTIVE OFFICERS AND CORPORATE GOVERNANCE
+The Company has adopted a Code of Business Conduct and Ethics applicable to
+all employees, officers, and directors. The Audit Committee oversees
+compliance with the Foreign Corrupt Practices Act (FCPA), Sarbanes-Oxley
+Act internal controls requirements, and the Company's whistleblower program.
+
+ITEM 14. PRINCIPAL ACCOUNTANT FEES AND SERVICES
+Audit Fees: $21M
+Audit-Related Fees: $6M
+Tax Fees: $5M
